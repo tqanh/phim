@@ -257,8 +257,9 @@ function handleKeyNavigation(e) {
                     return;
                 case 'ArrowLeft':
                     e.preventDefault();
-                    // Go back to video controls
-                    videoControls[0]?.focus();
+                    // Go back to first control button (Play/Pause)
+                    const firstControl = document.querySelector('.control-btn');
+                    if (firstControl) firstControl.focus();
                     return;
                 case 'Enter':
                     // Play the episode - handled by episode item's own listener

@@ -158,12 +158,14 @@ function renderEpisodeList(episodes, activeIndex, slug) {
                     break;
                 case 'ArrowLeft':
                     e.preventDefault();
+                    e.stopPropagation();
                     // Go back to control buttons
                     const firstControlBtn = document.querySelector('.control-btn');
                     if (firstControlBtn) firstControlBtn.focus();
                     break;
                 case 'ArrowUp':
                     e.preventDefault();
+                    e.stopPropagation();
                     // Go back to control buttons
                     const controlBtn = document.querySelector('.control-btn');
                     if (controlBtn) controlBtn.focus();
