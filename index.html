@@ -1432,10 +1432,9 @@
             }
         }
 
-        // Navigate Vertically (Up/Down)
+        // Navigate Vertically (Up/Down) - 2D Grid Navigation
         function navigateVertical(direction) {
             const activeElement = document.activeElement;
-            const allFocusable = Array.from(document.querySelectorAll(focusableSelectors));
             
             let nextElement = null;
 
@@ -1450,30 +1449,49 @@
                 const movieRow = document.getElementById('movieRow');
                 const loadMoreBtn = document.getElementById('loadMoreBtn');
                 
+                // Get current column index
+                const currentRow = continueRow && continueRow.contains(activeElement) ? continueRow : movieRow;
+                const movies = Array.from(currentRow.querySelectorAll('.movie-item'));
+                const currentIndex = movies.indexOf(activeElement);
+                
                 if (direction === 'up') {
-                    // If in new movies section and at first movie, move to last movie in continue watching
-                    if (movieRow && movieRow.contains(activeElement)) {
-                        const movies = Array.from(movieRow.querySelectorAll('.movie-item'));
-                        const movieIndex = movies.indexOf(activeElement);
-                        if (movieIndex === 0 && continueRow) {
-                            const continueMovies = Array.from(continueRow.querySelectorAll('.movie-item'));
-                            if (continueMovies.length > 0) nextElement = continueMovies[continueMovies.length - 1];
+                    // If in new movies section, move to continue watching at same column
+                    if (movieRow && movieRow.contains(activeElement) && continueRow) {
+                        const continueMovies = Array.from(continueRow.querySelectorAll('.movie-item'));
+                        if (continueMovies.length > 0) {
+                            // Try to find movie at same column index
+                            if (currentIndex < continueMovies.length) {
+                                nextElement = continueMovies[currentIndex];
+                            } else {
+                                // If continue row is shorter, focus last movie
+                                nextElement = continueMovies[continueMovies.length - 1];
+                            }
+                        } else {
+                            // No continue watching movies, move to nav
+                            const activeNav = document.querySelector('.nav-item.active') || document.querySelector('.nav-item');
+                            if (activeNav) nextElement = activeNav;
                         }
                     }
                     // If in continue watching section and at first movie, move to nav
                     else if (continueRow && continueRow.contains(activeElement)) {
-                        const continueMovies = Array.from(continueRow.querySelectorAll('.movie-item'));
-                        const movieIndex = continueMovies.indexOf(activeElement);
-                        if (movieIndex === 0) {
+                        if (currentIndex === 0) {
                             const activeNav = document.querySelector('.nav-item.active') || document.querySelector('.nav-item');
                             if (activeNav) nextElement = activeNav;
                         }
                     }
                 } else if (direction === 'down') {
-                    // If in continue watching section, move to first movie in new movies section
-                    if (continueRow && continueRow.contains(activeElement)) {
-                        const firstNewMovie = movieRow.querySelector('.movie-item');
-                        if (firstNewMovie) nextElement = firstNewMovie;
+                    // If in continue watching section, move to new movies at same column
+                    if (continueRow && continueRow.contains(activeElement) && movieRow) {
+                        const newMovies = Array.from(movieRow.querySelectorAll('.movie-item'));
+                        if (newMovies.length > 0) {
+                            // Try to find movie at same column index
+                            if (currentIndex < newMovies.length) {
+                                nextElement = newMovies[currentIndex];
+                            } else {
+                                // If new movies row is shorter, focus last movie
+                                nextElement = newMovies[newMovies.length - 1];
+                            }
+                        }
                     }
                     // If in new movies section, move to load more button
                     else if (movieRow && movieRow.contains(activeElement) && loadMoreBtn) {
