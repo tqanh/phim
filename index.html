@@ -1435,7 +1435,11 @@
                     // At last movie, move to load more button (only for movieRow)
                     if (currentRow === movieRow) {
                         const loadMoreBtn = document.getElementById('loadMoreBtn');
-                        if (loadMoreBtn) nextElement = loadMoreBtn;
+                        if (loadMoreBtn) {
+                            // Save current movie index before moving to button
+                            lastMovieIndexBeforeLoadMore = movieIndex;
+                            nextElement = loadMoreBtn;
+                        }
                     }
                 } else if (direction === 'left' && movieIndex > 0) {
                     nextElement = movies[movieIndex - 1];
@@ -1469,7 +1473,14 @@
                     const movieRow = document.getElementById('movieRow');
                     if (movieRow) {
                         const movies = Array.from(movieRow.querySelectorAll('.movie-item'));
-                        if (movies.length > 0) nextElement = movies[movies.length - 1];
+                        if (movies.length > 0) {
+                            // Use saved index if valid, otherwise fallback to last movie
+                            if (lastMovieIndexBeforeLoadMore >= 0 && lastMovieIndexBeforeLoadMore < movies.length) {
+                                nextElement = movies[lastMovieIndexBeforeLoadMore];
+                            } else {
+                                nextElement = movies[movies.length - 1];
+                            }
+                        }
                     }
                 }
             }
@@ -1490,6 +1501,12 @@
             let nextElement = null;
 
             if (activeElement.classList.contains('nav-item')) {
+                if (direction === 'down') {
+                    // Move to first movie
+                    const firstMovie = document.querySelector('.movie-item');
+                    if (firstMovie) nextElement = firstMovie;
+                }
+            } else if (activeElement.id === 'searchInput') {
                 if (direction === 'down') {
                     // Move to first movie
                     const firstMovie = document.querySelector('.movie-item');
