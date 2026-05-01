@@ -1451,9 +1451,24 @@
                 const loadMoreBtn = document.getElementById('loadMoreBtn');
                 
                 if (direction === 'up') {
-                    // Move to nav
-                    const activeNav = document.querySelector('.nav-item.active') || document.querySelector('.nav-item');
-                    if (activeNav) nextElement = activeNav;
+                    // If in new movies section and at first movie, move to last movie in continue watching
+                    if (movieRow && movieRow.contains(activeElement)) {
+                        const movies = Array.from(movieRow.querySelectorAll('.movie-item'));
+                        const movieIndex = movies.indexOf(activeElement);
+                        if (movieIndex === 0 && continueRow) {
+                            const continueMovies = Array.from(continueRow.querySelectorAll('.movie-item'));
+                            if (continueMovies.length > 0) nextElement = continueMovies[continueMovies.length - 1];
+                        }
+                    }
+                    // If in continue watching section and at first movie, move to nav
+                    else if (continueRow && continueRow.contains(activeElement)) {
+                        const continueMovies = Array.from(continueRow.querySelectorAll('.movie-item'));
+                        const movieIndex = continueMovies.indexOf(activeElement);
+                        if (movieIndex === 0) {
+                            const activeNav = document.querySelector('.nav-item.active') || document.querySelector('.nav-item');
+                            if (activeNav) nextElement = activeNav;
+                        }
+                    }
                 } else if (direction === 'down') {
                     // If in continue watching section, move to first movie in new movies section
                     if (continueRow && continueRow.contains(activeElement)) {
