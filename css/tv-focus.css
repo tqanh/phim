@@ -1,0 +1,131 @@
+/* TV Box Focus Styles - Enhanced for 10ft UI */
+
+/* Nav Item Focus */
+.nav-item:focus {
+    background: rgba(255,255,255,0.3);
+    transform: scale(1.1);
+    box-shadow: 0 0 0 4px #e50914, 0 0 20px rgba(229, 9, 20, 0.5);
+    font-weight: bold;
+}
+
+/* Movie Item Focus */
+.movie-item:focus {
+    transform: scale(1.15);
+    box-shadow: 0 0 0 6px #e50914, 0 0 30px rgba(229, 9, 20, 0.6);
+    z-index: 100;
+}
+
+/* Search Input Focus */
+.search-input:focus {
+    background: rgba(255,255,255,0.3);
+    border-color: #e50914;
+    box-shadow: 0 0 0 4px #e50914, 0 0 20px rgba(229, 9, 20, 0.5);
+    transform: scale(1.02);
+}
+
+/* Load More Button Focus */
+.load-more-btn:focus {
+    transform: scale(1.1);
+    box-shadow: 0 0 0 5px #e50914, 0 0 30px rgba(229, 9, 20, 0.6);
+    background: #e50914;
+    color: #fff;
+}
+
+/* TV Focus Indicator - Shows current selection */
+.tv-focus-indicator {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.9);
+    color: #fff;
+    padding: 12px 30px;
+    border-radius: 30px;
+    font-size: 18px;
+    font-weight: bold;
+    border: 2px solid #e50914;
+    box-shadow: 0 0 20px rgba(229, 9, 20, 0.5);
+    z-index: 999;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+    white-space: nowrap;
+    max-width: 80%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.tv-focus-indicator.active {
+    opacity: 1;
+}
+
+.tv-focus-indicator::before {
+    content: '⬤ ';
+    color: #e50914;
+}
+
+/* TV Box Help Overlay */
+.tv-help-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.9);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+}
+
+.tv-help-overlay.active {
+    display: flex;
+}
+
+.tv-help-content {
+    background: #1a1a1a;
+    border-radius: 16px;
+    padding: 40px 60px;
+    max-width: 800px;
+    border: 3px solid #e50914;
+    box-shadow: 0 0 50px rgba(229, 9, 20, 0.5);
+}
+
+.tv-help-content h2 {
+    color: #e50914;
+    font-size: 32px;
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.tv-help-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px 40px;
+    margin-bottom: 30px;
+}
+
+.tv-help-item {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    font-size: 20px;
+}
+
+.tv-key {
+    background: #333;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: bold;
+    color: #e50914;
+    min-width: 140px;
+    text-align: center;
+    border: 2px solid #555;
+}
+
+.tv-help-close {
+    text-align: center;
+    color: #888;
+    font-size: 18px;
+    margin-top: 20px;
+}
