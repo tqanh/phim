@@ -1529,12 +1529,10 @@
                             if (activeNav) nextElement = activeNav;
                         }
                     }
-                    // If in continue watching section and at first movie, move to nav
+                    // If in continue watching section, move to nav (any movie position)
                     else if (continueRow && continueRow.contains(activeElement)) {
-                        if (currentIndex === 0) {
-                            const activeNav = document.querySelector('.nav-item.active') || document.querySelector('.nav-item');
-                            if (activeNav) nextElement = activeNav;
-                        }
+                        const activeNav = document.querySelector('.nav-item.active') || document.querySelector('.nav-item');
+                        if (activeNav) nextElement = activeNav;
                     }
                 } else if (direction === 'down') {
                     // If in continue watching section, move to new movies at same column
