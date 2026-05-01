@@ -1,9 +1,10 @@
 // Main entry point - initializes the TV Box Movie App
 import { 
     setMovies, setAllMovies, setCurrentPage, setIsSearching, setSearchQuery, 
-    setCurrentMovieInfo, movies, allMovies, currentPage, isSearching, searchQuery 
+    setCurrentMovieInfo, setCurrentFilter, movies, allMovies, currentPage, 
+    isSearching, searchQuery, currentFilter 
 } from './config.js';
-import { fetchMovies } from './api.js';
+import { fetchMovies, isSeries } from './api.js';
 import { setupTVFocusIndicator, setupSearch } from './focus-manager.js';
 import { navigateHorizontal, navigateVertical, scrollIntoView } from './navigation.js';
 import { renderMoviesWithSections, appendMovies, showLoading, showError, clearSearchInput } from './movie-renderer.js';
@@ -50,15 +51,21 @@ async function loadMovies(page = 1, append = false) {
         if (data.status === true && data.items && Array.isArray(data.items)) {
             const pathImage = data.pathImage || 'https://img.ophim.live/uploads/movies/';
             
+            // Filter movies based on current tab
+            let filteredItems = data.items;
+            if (currentFilter === 'series') {
+                filteredItems = data.items.filter(isSeries);
+            }
+            
             if (append) {
-                setMovies([...movies, ...data.items]);
-                setAllMovies([...allMovies, ...data.items]);
-                appendMovies(data.items, pathImage, playMovie);
+                setMovies([...movies, ...filteredItems]);
+                setAllMovies([...allMovies, ...filteredItems]);
+                appendMovies(filteredItems, pathImage, playMovie);
             } else {
-                setMovies(data.items);
-                setAllMovies(data.items);
+                setMovies(filteredItems);
+                setAllMovies(filteredItems);
                 setCurrentPage(page);
-                renderMoviesWithSections(data.items, pathImage, loadMoreMovies, playMovie);
+                renderMoviesWithSections(filteredItems, pathImage, loadMoreMovies, playMovie, currentFilter);
             }
             
             // Set initial focus
@@ -83,6 +90,25 @@ async function loadMovies(page = 1, append = false) {
             }
         }
     }
+}
+
+// Switch between Movies and Series tabs
+function switchTab(tab) {
+    if (tab === currentFilter) return;
+    
+    setCurrentFilter(tab);
+    setCurrentPage(1);
+    
+    // Update UI
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.remove('active');
+        if (item.dataset.section === tab) {
+            item.classList.add('active');
+        }
+    });
+    
+    // Reload content
+    loadMovies(1, false);
 }
 
 // Handle search
@@ -162,6 +188,19 @@ function setupNavigation() {
     document.getElementById('modalClose').addEventListener('click', closeModal);
     document.getElementById('modalClose').addEventListener('keydown', (e) => {
         if (e.key === 'Enter') closeModal();
+    });
+
+    // Tab navigation click handlers
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.addEventListener('click', () => {
+            switchTab(item.dataset.section);
+        });
+        item.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                switchTab(item.dataset.section);
+            }
+        });
     });
 
     // Global keyboard handler
@@ -264,6 +303,9 @@ function handleKeyNavigation(e) {
             if (activeElement.classList.contains('movie-item')) {
                 e.preventDefault();
                 playMovie(activeElement.dataset.slug);
+            } else if (activeElement.classList.contains('nav-item')) {
+                e.preventDefault();
+                switchTab(activeElement.dataset.section);
             }
             break;
     }

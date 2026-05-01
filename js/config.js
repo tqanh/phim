@@ -11,7 +11,8 @@ export const focusableSelectors = '.nav-item, .movie-item, .modal-close, .search
 // State (will be managed by state.js or main.js)
 export let movies = [];
 export let focusedElement = null;
-export let currentSection = 'movies';
+export let currentSection = 'movies'; // 'movies' or 'series'
+export let currentFilter = 'movies'; // 'movies' or 'series'
 export let currentMovieSlug = null;
 export let currentEpisodeId = null;
 export let currentPage = 1;
@@ -32,6 +33,7 @@ export function setMovies(newMovies) { movies = newMovies; }
 export function appendMovies(newMovies) { movies = [...movies, ...newMovies]; }
 export function setFocusedElement(el) { focusedElement = el; }
 export function setCurrentSection(section) { currentSection = section; }
+export function setCurrentFilter(filter) { currentFilter = filter; }
 export function setCurrentMovieSlug(slug) { currentMovieSlug = slug; }
 export function setCurrentEpisodeId(id) { currentEpisodeId = id; }
 export function setCurrentPage(page) { currentPage = page; }

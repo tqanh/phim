@@ -34,14 +34,14 @@ export function renderMovieCard(movie, index, pathImage) {
 }
 
 // Render movies with sections (Continue Watching + New Movies)
-export function renderMoviesWithSections(moviesList, pathImage, onLoadMore, onMovieClick) {
+export function renderMoviesWithSections(moviesList, pathImage, onLoadMore, onMovieClick, currentFilter = 'movies') {
     const mainContent = document.getElementById('mainContent');
     const continueWatching = getContinueWatching();
     
     let html = '';
     
-    // Continue Watching Section
-    if (continueWatching.length > 0) {
+    // Continue Watching Section (only show in 'movies' tab)
+    if (continueWatching.length > 0 && currentFilter === 'movies') {
         html += `
             <section class="section">
                 <h2 class="section-title">Tiếp Tục Xem</h2>
@@ -56,9 +56,19 @@ export function renderMoviesWithSections(moviesList, pathImage, onLoadMore, onMo
     const continueWatchingSlugs = new Set(continueWatching.map(m => m.slug));
     const filteredMovies = moviesList.filter(movie => !continueWatchingSlugs.has(movie.slug));
     
+    // Set section title based on filter and search state
+    let sectionTitle;
+    if (isSearching) {
+        sectionTitle = `Kết quả tìm kiếm: "${searchQuery}"`;
+    } else if (currentFilter === 'series') {
+        sectionTitle = 'Phim Bộ Mới Cập Nhật';
+    } else {
+        sectionTitle = 'Phim Mới Cập Nhật';
+    }
+    
     html += `
         <section class="section">
-            <h2 class="section-title">${isSearching ? `Kết quả tìm kiếm: "${searchQuery}"` : 'Phim Mới Cập Nhật'}</h2>
+            <h2 class="section-title">${sectionTitle}</h2>
             <div class="movie-row" id="movieRow">
                 ${filteredMovies.map((movie, index) => renderMovieCard(movie, index, pathImage)).join('')}
             </div>
