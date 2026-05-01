@@ -595,6 +595,39 @@
             font-size: 18px;
             margin-top: 20px;
         }
+
+        /* TV Focus Indicator - Shows current selection */
+        .tv-focus-indicator {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: #fff;
+            padding: 12px 30px;
+            border-radius: 30px;
+            font-size: 18px;
+            font-weight: bold;
+            border: 2px solid #e50914;
+            box-shadow: 0 0 20px rgba(229, 9, 20, 0.5);
+            z-index: 999;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+            white-space: nowrap;
+            max-width: 80%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .tv-focus-indicator.active {
+            opacity: 1;
+        }
+
+        .tv-focus-indicator::before {
+            content: '⬤ ';
+            color: #e50914;
+        }
     </style>
 </head>
 <body>
@@ -609,6 +642,9 @@
             <input type="text" class="search-input" id="searchInput" placeholder="Tìm phim... (S)" tabindex="0">
         </div>
     </header>
+
+    <!-- TV Focus Indicator -->
+    <div class="tv-focus-indicator" id="tvFocusIndicator"></div>
 
     <!-- Main Content -->
     <main class="main-content" id="mainContent">
@@ -719,7 +755,50 @@
                     firstNav.focus();
                 }
             }, 500);
+
+            // Setup TV focus indicator
+            setupTVFocusIndicator();
         });
+
+        // TV Focus Indicator - Shows current selection name
+        function setupTVFocusIndicator() {
+            const indicator = document.getElementById('tvFocusIndicator');
+            let hideTimeout;
+
+            function updateIndicator() {
+                const active = document.activeElement;
+                let text = '';
+
+                if (active.classList.contains('nav-item')) {
+                    text = active.textContent;
+                } else if (active.classList.contains('movie-item')) {
+                    const name = active.querySelector('.movie-details-name');
+                    text = name ? name.textContent : 'Phim';
+                } else if (active.id === 'searchInput') {
+                    text = 'Tìm kiếm';
+                } else if (active.id === 'loadMoreBtn') {
+                    text = 'Tải thêm phim';
+                } else if (active.id === 'modalClose') {
+                    text = 'Thoát';
+                } else if (active.classList.contains('control-btn')) {
+                    text = active.textContent;
+                }
+
+                if (text) {
+                    indicator.textContent = text;
+                    indicator.classList.add('active');
+
+                    // Hide after 2 seconds
+                    clearTimeout(hideTimeout);
+                    hideTimeout = setTimeout(() => {
+                        indicator.classList.remove('active');
+                    }, 2000);
+                }
+            }
+
+            // Update on focus change
+            document.addEventListener('focusin', updateIndicator);
+        }
 
         // Load Movies from API with pagination
         async function loadMovies(page = 1, append = false) {
