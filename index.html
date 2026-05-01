@@ -222,11 +222,94 @@
             box-shadow: 0 0 0 3px #fff;
         }
 
-        .player-iframe {
+        /* Custom Video Player for TV Box */
+        .video-container {
             width: 100%;
             height: 100%;
-            border: none;
+            position: relative;
+            background: #000;
             border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .video-player {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .video-controls {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, transparent 100%);
+            padding: 30px;
+            opacity: 1;
+            transition: opacity 0.3s;
+        }
+
+        .control-bar {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 15px;
+        }
+
+        .control-btn {
+            background: rgba(255,255,255,0.2);
+            color: #fff;
+            border: 2px solid transparent;
+            padding: 12px 24px;
+            font-size: 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            outline: none;
+            transition: all 0.2s;
+            min-width: 100px;
+        }
+
+        .control-btn:focus {
+            background: #e50914;
+            border-color: #fff;
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(229, 9, 20, 0.5);
+        }
+
+        .time-display {
+            font-size: 20px;
+            color: #fff;
+            font-weight: bold;
+            min-width: 150px;
+            text-align: center;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 8px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 4px;
+            cursor: pointer;
+            margin-bottom: 15px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: #e50914;
+            border-radius: 4px;
+            width: 0%;
+            transition: width 0.1s linear;
+        }
+
+        .control-hint {
+            font-size: 16px;
+            color: rgba(255,255,255,0.7);
+            text-align: center;
+        }
+
+        /* Video player focus state */
+        .video-player:focus {
+            outline: none;
         }
 
         /* Error message */
@@ -257,9 +340,29 @@
     <div class="modal-overlay" id="modalOverlay">
         <div class="modal-content">
             <button class="modal-close" tabindex="0" id="modalClose">Thoát (Back)</button>
-            <iframe class="player-iframe" id="playerIframe" allowfullscreen></iframe>
+            <div class="video-container">
+                <video class="video-player" id="videoPlayer" tabindex="0" playsinline></video>
+                <div class="video-controls" id="videoControls">
+                    <div class="control-bar">
+                        <button class="control-btn" id="playPauseBtn" tabindex="0">⏵ Play</button>
+                        <div class="time-display" id="timeDisplay">00:00 / 00:00</div>
+                        <button class="control-btn" id="seekBackBtn" tabindex="0">⏪ -10s</button>
+                        <button class="control-btn" id="seekForwardBtn" tabindex="0">⏩ +10s</button>
+                        <button class="control-btn" id="fullscreenBtn" tabindex="0">⛶ Full</button>
+                    </div>
+                    <div class="progress-bar-container" id="progressContainer">
+                        <div class="progress-bar" id="progressBar"></div>
+                    </div>
+                    <div class="control-hint">
+                        OK/Enter: Play/Pause | ← →: Tua 10s | ↑ ↓: Âm lượng | Back: Thoát
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
+
+    <!-- HLS.js for m3u8 support -->
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.0/dist/hls.min.js"></script>
 
     <script>
         // API Configuration
@@ -341,7 +444,7 @@
             });
         }
 
-        // Play Movie - Open Modal with embed URL
+        // Play Movie - Open Modal with video URL
         async function playMovie(slug) {
             try {
                 const response = await fetch(`${API_BASE}/phim/${slug}`);
@@ -349,19 +452,20 @@
                 
                 if (data.status === true && data.episodes && Array.isArray(data.episodes)) {
                     const episodes = data.episodes;
-                    let embedUrl = null;
+                    let videoUrl = null;
                     
-                    // Find first available embed URL
+                    // Find first available video URL (prefer m3u8 over embed)
                     for (const server of episodes) {
                         if (server.server_data && server.server_data.length > 0) {
                             const firstEp = server.server_data[0];
-                            embedUrl = firstEp.link_embed || firstEp.link_m3u8;
-                            if (embedUrl) break;
+                            // Prefer m3u8 for native player, fallback to embed
+                            videoUrl = firstEp.link_m3u8 || firstEp.link_embed;
+                            if (videoUrl) break;
                         }
                     }
                     
-                    if (embedUrl) {
-                        openModal(embedUrl);
+                    if (videoUrl) {
+                        openModal(videoUrl, data.movie?.name || 'Phim');
                     } else {
                         alert('Không tìm thấy link phim!');
                     }
@@ -373,34 +477,224 @@
             }
         }
 
-        // Open Modal
-        function openModal(embedUrl) {
+        // Video Player Variables
+        let hls = null;
+        let currentVideoUrl = null;
+
+        // Open Modal with Video Player
+        function openModal(videoUrl, movieName) {
             const modal = document.getElementById('modalOverlay');
-            const iframe = document.getElementById('playerIframe');
+            const video = document.getElementById('videoPlayer');
             const closeBtn = document.getElementById('modalClose');
             
-            iframe.src = embedUrl;
+            currentVideoUrl = videoUrl;
             modal.classList.add('active');
             
-            // Focus close button
+            // Setup video player
+            setupVideoPlayer(videoUrl, movieName);
+            
+            // Focus close button initially
             setTimeout(() => closeBtn.focus(), 100);
+        }
+
+        // Setup Video Player with HLS support
+        function setupVideoPlayer(videoUrl, movieName) {
+            const video = document.getElementById('videoPlayer');
+            const playPauseBtn = document.getElementById('playPauseBtn');
+            const seekBackBtn = document.getElementById('seekBackBtn');
+            const seekForwardBtn = document.getElementById('seekForwardBtn');
+            const fullscreenBtn = document.getElementById('fullscreenBtn');
+            const timeDisplay = document.getElementById('timeDisplay');
+            const progressBar = document.getElementById('progressBar');
+            const progressContainer = document.getElementById('progressContainer');
+            
+            // Reset video
+            video.pause();
+            video.currentTime = 0;
+            
+            // Setup HLS or native playback
+            if (videoUrl.includes('.m3u8') && Hls.isSupported()) {
+                // Destroy previous HLS instance
+                if (hls) {
+                    hls.destroy();
+                }
+                
+                hls = new Hls({
+                    maxBufferLength: 30,
+                    maxMaxBufferLength: 60,
+                    enableWorker: true
+                });
+                
+                hls.loadSource(videoUrl);
+                hls.attachMedia(video);
+                
+                hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                    video.play().catch(() => {
+                        // Auto-play blocked, user needs to press play
+                    });
+                    updatePlayPauseButton();
+                });
+                
+                hls.on(Hls.Events.ERROR, (event, data) => {
+                    if (data.fatal) {
+                        console.error('HLS Error:', data);
+                    }
+                });
+            } else {
+                // Native playback for non-HLS
+                video.src = videoUrl;
+                video.load();
+                video.play().catch(() => {
+                    // Auto-play blocked
+                });
+            }
+            
+            // Update time display
+            function updateTimeDisplay() {
+                const current = formatTime(video.currentTime);
+                const duration = formatTime(video.duration || 0);
+                timeDisplay.textContent = `${current} / ${duration}`;
+                
+                // Update progress bar
+                const progress = video.duration ? (video.currentTime / video.duration) * 100 : 0;
+                progressBar.style.width = `${progress}%`;
+            }
+            
+            video.addEventListener('timeupdate', updateTimeDisplay);
+            video.addEventListener('loadedmetadata', updateTimeDisplay);
+            video.addEventListener('play', updatePlayPauseButton);
+            video.addEventListener('pause', updatePlayPauseButton);
+            
+            // Play/Pause
+            function togglePlayPause() {
+                if (video.paused) {
+                    video.play();
+                } else {
+                    video.pause();
+                }
+                updatePlayPauseButton();
+            }
+            
+            function updatePlayPauseButton() {
+                playPauseBtn.textContent = video.paused ? '⏵ Play' : '⏸ Pause';
+            }
+            
+            playPauseBtn.onclick = togglePlayPause;
+            playPauseBtn.onkeydown = (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    togglePlayPause();
+                }
+            };
+            
+            // Seek buttons
+            function seek(seconds) {
+                video.currentTime = Math.max(0, Math.min(video.duration || 0, video.currentTime + seconds));
+            }
+            
+            seekBackBtn.onclick = () => seek(-10);
+            seekBackBtn.onkeydown = (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    seek(-10);
+                }
+            };
+            
+            seekForwardBtn.onclick = () => seek(10);
+            seekForwardBtn.onkeydown = (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    seek(10);
+                }
+            };
+            
+            // Fullscreen
+            fullscreenBtn.onclick = toggleFullscreen;
+            fullscreenBtn.onkeydown = (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    toggleFullscreen();
+                }
+            };
+            
+            function toggleFullscreen() {
+                if (!document.fullscreenElement) {
+                    modal.requestFullscreen?.() || video.requestFullscreen?.();
+                } else {
+                    document.exitFullscreen?.();
+                }
+            }
+            
+            // Progress bar click
+            progressContainer.onclick = (e) => {
+                const rect = progressContainer.getBoundingClientRect();
+                const pos = (e.clientX - rect.left) / rect.width;
+                video.currentTime = pos * video.duration;
+            };
+            
+            // Keyboard controls for video
+            video.onkeydown = (e) => {
+                switch(e.key) {
+                    case 'Enter':
+                    case ' ':
+                        e.preventDefault();
+                        togglePlayPause();
+                        break;
+                    case 'ArrowLeft':
+                        e.preventDefault();
+                        seek(-10);
+                        break;
+                    case 'ArrowRight':
+                        e.preventDefault();
+                        seek(10);
+                        break;
+                    case 'ArrowUp':
+                        e.preventDefault();
+                        video.volume = Math.min(1, video.volume + 0.1);
+                        break;
+                    case 'ArrowDown':
+                        e.preventDefault();
+                        video.volume = Math.max(0, video.volume - 0.1);
+                        break;
+                }
+            };
+        }
+
+        // Format time helper
+        function formatTime(seconds) {
+            if (isNaN(seconds)) return '00:00';
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
         }
 
         // Close Modal
         function closeModal() {
             const modal = document.getElementById('modalOverlay');
-            const iframe = document.getElementById('playerIframe');
+            const video = document.getElementById('videoPlayer');
             
-            iframe.src = '';
+            // Stop video
+            video.pause();
+            video.src = '';
+            
+            // Destroy HLS instance
+            if (hls) {
+                hls.destroy();
+                hls = null;
+            }
+            
+            // Exit fullscreen if active
+            if (document.fullscreenElement) {
+                document.exitFullscreen?.();
+            }
+            
             modal.classList.remove('active');
             
             // Return focus to last focused movie
-            const lastMovie = document.querySelector('.movie-item:focus');
+            const lastMovie = document.querySelector('.movie-item:focus') || 
+                             document.querySelector(`[data-slug]`);
             if (lastMovie) {
                 lastMovie.focus();
-            } else {
-                const firstMovie = document.querySelector('.movie-item');
-                if (firstMovie) firstMovie.focus();
             }
         }
 
@@ -420,15 +714,54 @@
         function handleKeyNavigation(e) {
             const modal = document.getElementById('modalOverlay');
             
-            // If modal is open
+            // If modal is open - handle video controls
             if (modal.classList.contains('active')) {
-                if (e.key === 'Escape' || e.key === 'Backspace') {
-                    e.preventDefault();
-                    closeModal();
+                const videoControls = document.querySelectorAll('.control-btn, .modal-close');
+                const activeElement = document.activeElement;
+                const currentIndex = Array.from(videoControls).indexOf(activeElement);
+                
+                switch(e.key) {
+                    case 'Escape':
+                    case 'Backspace':
+                        e.preventDefault();
+                        closeModal();
+                        return;
+                        
+                    case 'Tab':
+                        e.preventDefault();
+                        // Cycle through controls
+                        const nextIndex = (currentIndex + 1) % videoControls.length;
+                        videoControls[nextIndex].focus();
+                        return;
+                        
+                    case 'ArrowRight':
+                        e.preventDefault();
+                        if (currentIndex < videoControls.length - 1) {
+                            videoControls[currentIndex + 1].focus();
+                        }
+                        return;
+                        
+                    case 'ArrowLeft':
+                        e.preventDefault();
+                        if (currentIndex > 0) {
+                            videoControls[currentIndex - 1].focus();
+                        }
+                        return;
+                        
+                    case 'ArrowDown':
+                        e.preventDefault();
+                        // Focus video player to use video shortcuts
+                        document.getElementById('videoPlayer').focus();
+                        return;
+                        
+                    case 'Enter':
+                        // Allow default button click behavior
+                        return;
                 }
                 return;
             }
 
+            // Main navigation when modal is closed
             const activeElement = document.activeElement;
             
             switch(e.key) {
