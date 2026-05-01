@@ -1480,6 +1480,9 @@
             }
         }
 
+        // Track last movie index before navigating to loadMoreBtn
+        let lastMovieIndexBeforeLoadMore = -1;
+
         // Navigate Vertically (Up/Down) - 2D Grid Navigation
         function navigateVertical(direction) {
             const activeElement = document.activeElement;
@@ -1549,15 +1552,24 @@
                     }
                     // If in new movies section, move to load more button
                     else if (movieRow && movieRow.contains(activeElement) && loadMoreBtn) {
+                        // Save current movie index before moving to button
+                        lastMovieIndexBeforeLoadMore = currentIndex;
                         nextElement = loadMoreBtn;
                     }
                 }
             } else if (activeElement.id === 'loadMoreBtn') {
                 const movieRow = document.getElementById('movieRow');
                 if (direction === 'up' && movieRow) {
-                    // Move to last movie in new movies section
+                    // Move back to the movie that was focused before coming to button
                     const movies = Array.from(movieRow.querySelectorAll('.movie-item'));
-                    if (movies.length > 0) nextElement = movies[movies.length - 1];
+                    if (movies.length > 0) {
+                        // Use saved index if valid, otherwise fallback to last movie
+                        if (lastMovieIndexBeforeLoadMore >= 0 && lastMovieIndexBeforeLoadMore < movies.length) {
+                            nextElement = movies[lastMovieIndexBeforeLoadMore];
+                        } else {
+                            nextElement = movies[movies.length - 1];
+                        }
+                    }
                 }
             }
 
