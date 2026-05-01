@@ -772,7 +772,7 @@
                 if (active.classList.contains('nav-item')) {
                     text = active.textContent;
                 } else if (active.classList.contains('movie-item')) {
-                    const name = active.querySelector('.movie-details-name');
+                    const name = active.querySelector('.movie-details-title');
                     text = name ? name.textContent : 'Phim';
                 } else if (active.id === 'searchInput') {
                     text = 'Tìm kiếm';
