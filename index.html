@@ -35,23 +35,32 @@
     <div class="modal-overlay" id="modalOverlay">
         <div class="modal-content">
             <button class="modal-close" tabindex="0" id="modalClose">Thoát (Back)</button>
-            <div class="video-container">
-                <video class="video-player" id="videoPlayer" tabindex="0" playsinline></video>
-                <div class="video-controls" id="videoControls">
-                    <div class="control-bar">
-                        <button class="control-btn" id="playPauseBtn" tabindex="0">⏵ Play</button>
-                        <div class="time-display" id="timeDisplay">00:00 / 00:00</div>
-                        <button class="control-btn" id="seekBackBtn" tabindex="0">⏪ -10s</button>
-                        <button class="control-btn" id="seekForwardBtn" tabindex="0">⏩ +10s</button>
-                        <button class="control-btn" id="fullscreenBtn" tabindex="0">⛶ Full</button>
+            <div class="video-layout">
+                <div class="video-container">
+                    <video class="video-player" id="videoPlayer" tabindex="0" playsinline></video>
+                    <div class="video-controls" id="videoControls">
+                        <div class="control-bar">
+                            <button class="control-btn" id="playPauseBtn" tabindex="0">⏵ Play</button>
+                            <button class="control-btn" id="prevEpisodeBtn" tabindex="0">⏮ Tập Trước</button>
+                            <div class="time-display" id="timeDisplay">00:00 / 00:00</div>
+                            <button class="control-btn" id="nextEpisodeBtn" tabindex="0">Tập Tiếp ⏭</button>
+                            <button class="control-btn" id="seekBackBtn" tabindex="0">⏪ -10s</button>
+                            <button class="control-btn" id="seekForwardBtn" tabindex="0">⏩ +10s</button>
+                            <button class="control-btn" id="fullscreenBtn" tabindex="0">⛶ Full</button>
+                        </div>
+                        <div class="progress-bar-container" id="progressContainer">
+                            <div class="progress-bar" id="progressBar"></div>
+                        </div>
+                        <div class="volume-indicator" id="volumeIndicator">Âm lượng: 100%</div>
+                        <div class="control-hint">
+                            OK/Enter: Play/Pause | P/N: Tập Trước/Tiếp | ← →: Tua 10s | ↑ ↓: Âm lượng | Back: Thoát
+                        </div>
                     </div>
-                    <div class="progress-bar-container" id="progressContainer">
-                        <div class="progress-bar" id="progressBar"></div>
-                    </div>
-                    <div class="volume-indicator" id="volumeIndicator">Âm lượng: 100%</div>
-                    <div class="control-hint">
-                        OK/Enter: Play/Pause | ← →: Tua 10s | ↑ ↓: Âm lượng | F: Toàn màn hình | Back: Thoát
-                    </div>
+                </div>
+                <!-- Episode List Panel -->
+                <div class="episode-panel" id="episodePanel">
+                    <h3 class="episode-panel-title">Danh Sách Tập</h3>
+                    <div class="episode-list" id="episodeList"></div>
                 </div>
             </div>
         </div>

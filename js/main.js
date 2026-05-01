@@ -153,24 +153,27 @@ async function playMovie(slug) {
         const data = await fetchMovieDetails(slug);
         
         if (data.status === true && data.episodes && Array.isArray(data.episodes)) {
-            const episodes = data.episodes;
-            let videoUrl = null;
-            let episodeId = null;
-            
-            // Find first available video URL (prefer m3u8 over embed)
-            for (const server of episodes) {
+            // Flatten all episodes from all servers into a single array
+            let allEpisodes = [];
+            for (const server of data.episodes) {
                 if (server.server_data && server.server_data.length > 0) {
-                    const firstEp = server.server_data[0];
-                    // Prefer m3u8 for native player, fallback to embed
-                    videoUrl = firstEp.link_m3u8 || firstEp.link_embed;
-                    episodeId = firstEp.slug || 'ep1';
-                    if (videoUrl) break;
+                    allEpisodes = [...allEpisodes, ...server.server_data];
                 }
             }
             
+            if (allEpisodes.length === 0) {
+                alert('Không tìm thấy tập phim nào!');
+                return;
+            }
+            
+            // Get first episode
+            const firstEp = allEpisodes[0];
+            const videoUrl = firstEp.link_m3u8 || firstEp.link_embed;
+            const episodeId = firstEp.slug || 'ep1';
+            
             if (videoUrl) {
                 setCurrentMovieInfo(data.movie);
-                openModal(videoUrl, data.movie?.name || 'Phim', slug, episodeId);
+                openModal(videoUrl, data.movie?.name || 'Phim', slug, episodeId, allEpisodes, 0);
             } else {
                 alert('Không tìm thấy link phim!');
             }

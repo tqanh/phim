@@ -6,7 +6,7 @@ export const STORAGE_KEY = 'phimTV_watchProgress';
 export const CONTINUE_WATCHING_KEY = 'phimTV_continueWatching';
 
 // Focusable selectors for navigation
-export const focusableSelectors = '.nav-item, .movie-item, .modal-close, .search-input, .load-more-btn';
+export const focusableSelectors = '.nav-item, .movie-item, .modal-close, .search-input, .load-more-btn, .episode-item';
 
 // State (will be managed by state.js or main.js)
 export let movies = [];
@@ -28,6 +28,11 @@ export let hls = null;
 export let currentVideoUrl = null;
 export let currentMovieInfo = null;
 
+// Episode list state
+export let currentEpisodes = []; // All episodes for current movie
+export let currentEpisodeIndex = 0; // Current episode position
+export let hasMultipleEpisodes = false; // Whether movie has multiple episodes
+
 // Export state setters
 export function setMovies(newMovies) { movies = newMovies; }
 export function appendMovies(newMovies) { movies = [...movies, ...newMovies]; }
@@ -45,3 +50,6 @@ export function setLastMovieIndexBeforeLoadMore(index) { lastMovieIndexBeforeLoa
 export function setHls(newHls) { hls = newHls; }
 export function setCurrentVideoUrl(url) { currentVideoUrl = url; }
 export function setCurrentMovieInfo(info) { currentMovieInfo = info; }
+export function setCurrentEpisodes(episodes) { currentEpisodes = episodes; }
+export function setCurrentEpisodeIndex(index) { currentEpisodeIndex = index; }
+export function setHasMultipleEpisodes(value) { hasMultipleEpisodes = value; }

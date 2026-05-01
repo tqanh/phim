@@ -22,6 +22,132 @@
     position: relative;
 }
 
+/* Video Layout with Episode Panel */
+.video-layout {
+    display: flex;
+    gap: 20px;
+    height: 100%;
+    width: 100%;
+}
+
+.video-container {
+    flex: 1;
+    height: 100%;
+    position: relative;
+    background: #000;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+/* Episode Panel */
+.episode-panel {
+    width: 280px;
+    background: #1a1a1a;
+    border-radius: 8px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    border: 2px solid #333;
+}
+
+.episode-panel-title {
+    font-size: 20px;
+    font-weight: bold;
+    color: #e50914;
+    margin-bottom: 15px;
+    text-align: center;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #333;
+}
+
+.episode-list {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    scrollbar-width: thin;
+    scrollbar-color: #e50914 #333;
+}
+
+.episode-list::-webkit-scrollbar {
+    width: 8px;
+}
+
+.episode-list::-webkit-scrollbar-track {
+    background: #333;
+    border-radius: 4px;
+}
+
+.episode-list::-webkit-scrollbar-thumb {
+    background: #e50914;
+    border-radius: 4px;
+}
+
+.episode-item {
+    background: #2a2a2a;
+    border: 2px solid transparent;
+    border-radius: 8px;
+    padding: 12px 16px;
+    cursor: pointer;
+    outline: none;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.episode-item:hover {
+    background: #3a3a3a;
+}
+
+.episode-item:focus {
+    background: #e50914;
+    border-color: #fff;
+    transform: scale(1.02);
+    box-shadow: 0 0 15px rgba(229, 9, 20, 0.5);
+}
+
+.episode-item.active {
+    background: #e50914;
+    border-color: #fff;
+}
+
+.episode-item.active::before {
+    content: '▶ ';
+    font-size: 14px;
+}
+
+.episode-number {
+    font-weight: bold;
+    font-size: 16px;
+    min-width: 50px;
+}
+
+.episode-name {
+    font-size: 14px;
+    color: #ccc;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.episode-item:focus .episode-name,
+.episode-item.active .episode-name {
+    color: #fff;
+}
+
+.episode-progress {
+    font-size: 12px;
+    color: #888;
+    margin-left: auto;
+}
+
+.episode-item:focus .episode-progress,
+.episode-item.active .episode-progress {
+    color: #fff;
+}
+
 .modal-close {
     position: absolute;
     top: -50px;

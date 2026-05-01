@@ -1,6 +1,11 @@
 import { loadWatchProgress, saveWatchProgress } from './storage.js';
 import { formatTime } from './api.js';
-import { setHls, setCurrentVideoUrl, setCurrentMovieSlug, setCurrentEpisodeId, setCurrentMovieInfo, hls, currentMovieSlug, currentEpisodeId, currentMovieInfo } from './config.js';
+import { 
+    setHls, setCurrentVideoUrl, setCurrentMovieSlug, setCurrentEpisodeId, setCurrentMovieInfo,
+    setCurrentEpisodes, setCurrentEpisodeIndex, setHasMultipleEpisodes,
+    hls, currentMovieSlug, currentEpisodeId, currentMovieInfo,
+    currentEpisodes, currentEpisodeIndex, hasMultipleEpisodes
+} from './config.js';
 
 let volumeTimeout = null;
 
@@ -38,18 +43,34 @@ function showResumeNotification(currentTime) {
 }
 
 // Open Modal with Video Player
-export function openModal(videoUrl, movieName, slug, episodeId) {
+export function openModal(videoUrl, movieName, slug, episodeId, episodes = [], startIndex = 0) {
     const modal = document.getElementById('modalOverlay');
     const video = document.getElementById('videoPlayer');
     const closeBtn = document.getElementById('modalClose');
+    const episodePanel = document.getElementById('episodePanel');
     
     setCurrentVideoUrl(videoUrl);
     setCurrentMovieSlug(slug);
     setCurrentEpisodeId(episodeId);
+    setCurrentEpisodes(episodes);
+    setCurrentEpisodeIndex(startIndex);
+    setHasMultipleEpisodes(episodes.length > 1);
+    
     modal.classList.add('active');
+    
+    // Show/hide episode panel based on number of episodes
+    if (episodePanel) {
+        episodePanel.style.display = episodes.length > 1 ? 'flex' : 'none';
+    }
+    
+    // Render episode list
+    renderEpisodeList(episodes, startIndex, slug);
     
     // Setup video player with resume support
     setupVideoPlayer(videoUrl, movieName, slug, episodeId);
+    
+    // Setup episode navigation buttons
+    setupEpisodeNavigation();
     
     // Focus close button initially
     setTimeout(() => closeBtn.focus(), 100);
@@ -82,6 +103,131 @@ export function closeModal() {
                      document.querySelector(`[data-slug]`);
     if (lastMovie) {
         lastMovie.focus();
+    }
+}
+
+// Render Episode List
+function renderEpisodeList(episodes, activeIndex, slug) {
+    const episodeList = document.getElementById('episodeList');
+    if (!episodeList) return;
+    
+    episodeList.innerHTML = episodes.map((ep, index) => {
+        const isActive = index === activeIndex;
+        const progress = loadWatchProgress(slug, ep.slug || `ep${index + 1}`);
+        const progressText = progress > 60 ? ` (${Math.round(progress / 60)}ph)` : '';
+        
+        return `
+            <div class="episode-item ${isActive ? 'active' : ''}" 
+                 tabindex="0" 
+                 data-episode-index="${index}"
+                 data-episode-slug="${ep.slug || `ep${index + 1}`}">
+                <span class="episode-number">Tập ${index + 1}</span>
+                <span class="episode-name">${ep.name || ''}</span>
+                ${progressText ? `<span class="episode-progress">${progressText}</span>` : ''}
+            </div>
+        `;
+    }).join('');
+    
+    // Add click handlers to episode items
+    episodeList.querySelectorAll('.episode-item').forEach((item, index) => {
+        item.addEventListener('click', () => playEpisode(index));
+        item.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                playEpisode(index);
+            }
+        });
+    });
+    
+    // Scroll active episode into view
+    const activeItem = episodeList.querySelector('.episode-item.active');
+    if (activeItem) {
+        activeItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+}
+
+// Play specific episode
+export function playEpisode(index) {
+    if (index < 0 || index >= currentEpisodes.length) return;
+    
+    const episode = currentEpisodes[index];
+    const videoUrl = episode.link_m3u8 || episode.link_embed;
+    const episodeSlug = episode.slug || `ep${index + 1}`;
+    
+    if (!videoUrl) {
+        alert('Không tìm thấy link tập này!');
+        return;
+    }
+    
+    // Update state
+    setCurrentEpisodeIndex(index);
+    setCurrentEpisodeId(episodeSlug);
+    setCurrentVideoUrl(videoUrl);
+    
+    // Re-render episode list to update active state
+    renderEpisodeList(currentEpisodes, index, currentMovieSlug);
+    
+    // Reload video player with new episode
+    const video = document.getElementById('videoPlayer');
+    const movieName = currentMovieInfo?.name || 'Phim';
+    
+    // Stop current playback
+    video.pause();
+    if (hls) {
+        hls.destroy();
+        setHls(null);
+    }
+    
+    // Setup new video
+    setupVideoPlayer(videoUrl, movieName, currentMovieSlug, episodeSlug);
+    
+    // Focus video player
+    setTimeout(() => video.focus(), 100);
+}
+
+// Navigate to next episode
+export function nextEpisode() {
+    if (currentEpisodeIndex < currentEpisodes.length - 1) {
+        playEpisode(currentEpisodeIndex + 1);
+    }
+}
+
+// Navigate to previous episode
+export function prevEpisode() {
+    if (currentEpisodeIndex > 0) {
+        playEpisode(currentEpisodeIndex - 1);
+    }
+}
+
+// Setup episode navigation buttons
+function setupEpisodeNavigation() {
+    const prevBtn = document.getElementById('prevEpisodeBtn');
+    const nextBtn = document.getElementById('nextEpisodeBtn');
+    
+    if (prevBtn) {
+        prevBtn.onclick = () => prevEpisode();
+        prevBtn.onkeydown = (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                prevEpisode();
+            }
+        };
+        // Disable if at first episode
+        prevBtn.disabled = currentEpisodeIndex === 0;
+        prevBtn.style.opacity = currentEpisodeIndex === 0 ? '0.5' : '1';
+    }
+    
+    if (nextBtn) {
+        nextBtn.onclick = () => nextEpisode();
+        nextBtn.onkeydown = (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                nextEpisode();
+            }
+        };
+        // Disable if at last episode
+        nextBtn.disabled = currentEpisodeIndex === currentEpisodes.length - 1;
+        nextBtn.style.opacity = currentEpisodeIndex === currentEpisodes.length - 1 ? '0.5' : '1';
     }
 }
 
@@ -307,6 +453,30 @@ function setupVideoPlayer(videoUrl, movieName, slug, episodeId) {
             case 'F':
                 e.preventDefault();
                 toggleFullscreen();
+                break;
+            case 'n':
+            case 'N':
+                e.preventDefault();
+                if (hasMultipleEpisodes && currentEpisodeIndex < currentEpisodes.length - 1) {
+                    // Save current progress before switching
+                    clearInterval(saveInterval);
+                    if (slug && episodeId && video.currentTime > 0) {
+                        saveWatchProgress(slug, episodeId, video.currentTime, video.duration || 0, currentMovieInfo);
+                    }
+                    nextEpisode();
+                }
+                break;
+            case 'p':
+            case 'P':
+                e.preventDefault();
+                if (hasMultipleEpisodes && currentEpisodeIndex > 0) {
+                    // Save current progress before switching
+                    clearInterval(saveInterval);
+                    if (slug && episodeId && video.currentTime > 0) {
+                        saveWatchProgress(slug, episodeId, video.currentTime, video.duration || 0, currentMovieInfo);
+                    }
+                    prevEpisode();
+                }
                 break;
         }
     };
