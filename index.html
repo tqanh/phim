@@ -307,6 +307,27 @@
             text-align: center;
         }
 
+        .volume-indicator {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.8);
+            color: #fff;
+            padding: 20px 40px;
+            border-radius: 12px;
+            font-size: 24px;
+            font-weight: bold;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        .volume-indicator.show {
+            opacity: 1;
+        }
+
         /* Video player focus state */
         .video-player:focus {
             outline: none;
@@ -353,8 +374,9 @@
                     <div class="progress-bar-container" id="progressContainer">
                         <div class="progress-bar" id="progressBar"></div>
                     </div>
+                    <div class="volume-indicator" id="volumeIndicator">Âm lượng: 100%</div>
                     <div class="control-hint">
-                        OK/Enter: Play/Pause | ← →: Tua 10s | ↑ ↓: Âm lượng | Back: Thoát
+                        OK/Enter: Play/Pause | ← →: Tua 10s | ↑ ↓: Âm lượng | F: Toàn màn hình | Back: Thoát
                     </div>
                 </div>
             </div>
@@ -618,10 +640,22 @@
             };
             
             function toggleFullscreen() {
-                if (!document.fullscreenElement) {
-                    modal.requestFullscreen?.() || video.requestFullscreen?.();
-                } else {
-                    document.exitFullscreen?.();
+                try {
+                    if (!document.fullscreenElement) {
+                        // Try video first, then modal container
+                        if (video.requestFullscreen) {
+                            video.requestFullscreen().catch(err => {
+                                console.log('Video fullscreen failed, trying modal:', err);
+                                modal.requestFullscreen?.();
+                            });
+                        } else if (modal.requestFullscreen) {
+                            modal.requestFullscreen();
+                        }
+                    } else {
+                        document.exitFullscreen?.();
+                    }
+                } catch (err) {
+                    console.error('Fullscreen error:', err);
                 }
             }
             
@@ -631,6 +665,11 @@
                 const pos = (e.clientX - rect.left) / rect.width;
                 video.currentTime = pos * video.duration;
             };
+            
+            // Auto-focus video after short delay for TV Box
+            setTimeout(() => {
+                video.focus();
+            }, 500);
             
             // Keyboard controls for video
             video.onkeydown = (e) => {
@@ -651,10 +690,17 @@
                     case 'ArrowUp':
                         e.preventDefault();
                         video.volume = Math.min(1, video.volume + 0.1);
+                        showVolumeIndicator(video.volume);
                         break;
                     case 'ArrowDown':
                         e.preventDefault();
                         video.volume = Math.max(0, video.volume - 0.1);
+                        showVolumeIndicator(video.volume);
+                        break;
+                    case 'f':
+                    case 'F':
+                        e.preventDefault();
+                        toggleFullscreen();
                         break;
                 }
             };
@@ -666,6 +712,20 @@
             const mins = Math.floor(seconds / 60);
             const secs = Math.floor(seconds % 60);
             return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // Volume indicator
+        let volumeTimeout = null;
+        function showVolumeIndicator(volume) {
+            const indicator = document.getElementById('volumeIndicator');
+            const percentage = Math.round(volume * 100);
+            indicator.textContent = `Âm lượng: ${percentage}%`;
+            indicator.classList.add('show');
+            
+            clearTimeout(volumeTimeout);
+            volumeTimeout = setTimeout(() => {
+                indicator.classList.remove('show');
+            }, 2000);
         }
 
         // Close Modal
