@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phim TV - Android TV Box</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            background: #0f0f0f;
+            color: #fff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow-x: hidden;
+        }
+
+        body {
+            font-size: 18px;
+        }
+
+        /* Header */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 80px;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.9) 0%, transparent 100%);
+            display: flex;
+            align-items: center;
+            padding: 0 40px;
+            z-index: 100;
+        }
+
+        .logo {
+            font-size: 32px;
+            font-weight: bold;
+            color: #e50914;
+            letter-spacing: 2px;
+        }
+
+        .nav-menu {
+            display: flex;
+            gap: 40px;
+            margin-left: 60px;
+        }
+        
+        .nav-item {
+            font-size: 20px;
+            padding: 10px 20px;
+            border-radius: 4px;
+            transition: all 0.2s;
+            outline: none;
+        }
+
+        .nav-item:focus {
+            background: rgba(255,255,255,0.2);
+            transform: scale(1.05);
+        }
+
+        .nav-item.active {
+            font-weight: bold;
+            color: #e50914;
+        }
+
+        /* Main Content */
+        .main-content {
+            padding-top: 100px;
+            padding-bottom: 60px;
+        }
+
+        /* Section */
+        .section {
+            margin-bottom: 50px;
+        }
+
+        .section-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-left: 40px;
+            margin-bottom: 20px;
+            color: #e5e5e5;
+        }
+
+        /* Movie Row */
+        .movie-row {
+            display: flex;
+            gap: 20px;
+            padding: 20px 40px;
+            overflow-x: auto;
+            overflow-y: hidden;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            scroll-behavior: smooth;
+        }
+
+        .movie-row::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* Movie Item */
+        .movie-item {
+            flex: 0 0 auto;
+            width: 280px;
+            height: 420px;
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            outline: none;
+            background: #1a1a1a;
+        }
+
+        .movie-item:focus {
+            transform: scale(1.1);
+            box-shadow: 0 0 0 4px #fff, 0 0 20px rgba(255,255,255,0.5);
+            z-index: 10;
+        }
+
+        .movie-poster {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .movie-info {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 20px;
+            background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, transparent 100%);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .movie-item:focus .movie-info {
+            opacity: 1;
+        }
+
+        .movie-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            line-height: 1.3;
+        }
+
+        .movie-meta {
+            font-size: 14px;
+            color: #a3a3a3;
+        }
+
+        .movie-quality {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #e50914;
+            color: #fff;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 20px;
+            color: #a3a3a3;
+        }
+
+        /* Modal Player */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.95);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-content {
+            width: 95%;
+            height: 95%;
+            position: relative;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: -50px;
+            right: 0;
+            background: #e50914;
+            color: #fff;
+            border: none;
+            padding: 12px 24px;
+            font-size: 18px;
+            border-radius: 4px;
+            cursor: pointer;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .modal-close:focus {
+            transform: scale(1.1);
+            box-shadow: 0 0 0 3px #fff;
+        }
+
+        .player-iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            border-radius: 8px;
+        }
+
+        /* Error message */
+        .error-message {
+            text-align: center;
+            padding: 40px;
+            color: #e50914;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="logo">PHIM TV</div>
+        <nav class="nav-menu">
+            <div class="nav-item active" tabindex="0" data-section="movies">Phim Mới</div>
+            <div class="nav-item" tabindex="0" data-section="series">Phim Bộ</div>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content" id="mainContent">
+        <div class="loading">Đang tải phim...</div>
+    </main>
+
+    <!-- Modal Player -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal-content">
+            <button class="modal-close" tabindex="0" id="modalClose">Thoát (Back)</button>
+            <iframe class="player-iframe" id="playerIframe" allowfullscreen></iframe>
+        </div>
+    </div>
+
+    <script>
+        // API Configuration
+        const API_BASE = 'https://ophim1.com';
+        
+        // State
+        let movies = [];
+        let focusedElement = null;
+        let currentSection = 'movies';
+        const focusableSelectors = '.nav-item, .movie-item, .modal-close';
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadMovies();
+            setupNavigation();
+        });
+
+        // Load Movies from API
+        async function loadMovies() {
+            try {
+                const response = await fetch(`${API_BASE}/danh-sach/phim-moi-cap-nhat?page=1`);
+                const data = await response.json();
+                
+                if (data.status === true && data.items && Array.isArray(data.items)) {
+                    movies = data.items;
+                    const pathImage = data.pathImage || 'https://img.ophim.live/uploads/movies/';
+                    renderMovies(movies, pathImage);
+                    // Set initial focus after rendering
+                    setTimeout(() => {
+                        const firstNav = document.querySelector('.nav-item');
+                        if (firstNav) firstNav.focus();
+                    }, 100);
+                } else {
+                    throw new Error('Invalid data format');
+                }
+            } catch (error) {
+                document.getElementById('mainContent').innerHTML = 
+                    `<div class="error-message">Lỗi tải phim: ${error.message}. Vui lòng thử lại sau.</div>`;
+            }
+        }
+
+        // Render Movies
+        function renderMovies(moviesList, pathImage) {
+            const mainContent = document.getElementById('mainContent');
+            
+            const html = `
+                <section class="section">
+                    <h2 class="section-title">Phim Mới Cập Nhật</h2>
+                    <div class="movie-row" id="movieRow">
+                        ${moviesList.map((movie, index) => `
+                            <div class="movie-item" tabindex="0" data-movie-index="${index}" data-slug="${movie.slug}">
+                                <img class="movie-poster" 
+                                     src="${movie.poster_url ? pathImage + movie.poster_url : movie.thumb_url ? pathImage + movie.thumb_url : 'https://via.placeholder.com/280x420?text=No+Image'}" 
+                                     alt="${movie.name}" 
+                                     loading="lazy"
+                                     onerror="this.src='https://via.placeholder.com/280x420?text=No+Image'">
+                                ${movie.quality ? `<span class="movie-quality">${movie.quality}</span>` : ''}
+                                <div class="movie-info">
+                                    <div class="movie-title">${movie.name}</div>
+                                    <div class="movie-meta">${movie.year || ''} ${movie.time ? '• ' + movie.time : ''}</div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </section>
+            `;
+            
+            mainContent.innerHTML = html;
+            
+            // Add click handlers to movie items
+            document.querySelectorAll('.movie-item').forEach(item => {
+                item.addEventListener('click', () => playMovie(item.dataset.slug));
+                item.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        playMovie(item.dataset.slug);
+                    }
+                });
+            });
+        }
+
+        // Play Movie - Open Modal with embed URL
+        async function playMovie(slug) {
+            try {
+                const response = await fetch(`${API_BASE}/phim/${slug}`);
+                const data = await response.json();
+                
+                if (data.status === true && data.episodes && Array.isArray(data.episodes)) {
+                    const episodes = data.episodes;
+                    let embedUrl = null;
+                    
+                    // Find first available embed URL
+                    for (const server of episodes) {
+                        if (server.server_data && server.server_data.length > 0) {
+                            const firstEp = server.server_data[0];
+                            embedUrl = firstEp.link_embed || firstEp.link_m3u8;
+                            if (embedUrl) break;
+                        }
+                    }
+                    
+                    if (embedUrl) {
+                        openModal(embedUrl);
+                    } else {
+                        alert('Không tìm thấy link phim!');
+                    }
+                } else {
+                    alert('Không thể tải thông tin phim!');
+                }
+            } catch (error) {
+                alert('Lỗi: ' + error.message);
+            }
+        }
+
+        // Open Modal
+        function openModal(embedUrl) {
+            const modal = document.getElementById('modalOverlay');
+            const iframe = document.getElementById('playerIframe');
+            const closeBtn = document.getElementById('modalClose');
+            
+            iframe.src = embedUrl;
+            modal.classList.add('active');
+            
+            // Focus close button
+            setTimeout(() => closeBtn.focus(), 100);
+        }
+
+        // Close Modal
+        function closeModal() {
+            const modal = document.getElementById('modalOverlay');
+            const iframe = document.getElementById('playerIframe');
+            
+            iframe.src = '';
+            modal.classList.remove('active');
+            
+            // Return focus to last focused movie
+            const lastMovie = document.querySelector('.movie-item:focus');
+            if (lastMovie) {
+                lastMovie.focus();
+            } else {
+                const firstMovie = document.querySelector('.movie-item');
+                if (firstMovie) firstMovie.focus();
+            }
+        }
+
+        // Setup Navigation
+        function setupNavigation() {
+            // Close button handler
+            document.getElementById('modalClose').addEventListener('click', closeModal);
+            document.getElementById('modalClose').addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') closeModal();
+            });
+
+            // Global keyboard handler
+            document.addEventListener('keydown', handleKeyNavigation);
+        }
+
+        // Handle Keyboard Navigation
+        function handleKeyNavigation(e) {
+            const modal = document.getElementById('modalOverlay');
+            
+            // If modal is open
+            if (modal.classList.contains('active')) {
+                if (e.key === 'Escape' || e.key === 'Backspace') {
+                    e.preventDefault();
+                    closeModal();
+                }
+                return;
+            }
+
+            const activeElement = document.activeElement;
+            
+            switch(e.key) {
+                case 'ArrowRight':
+                    e.preventDefault();
+                    navigateHorizontal('right');
+                    break;
+                    
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    navigateHorizontal('left');
+                    break;
+                    
+                case 'ArrowDown':
+                    e.preventDefault();
+                    navigateVertical('down');
+                    break;
+                    
+                case 'ArrowUp':
+                    e.preventDefault();
+                    navigateVertical('up');
+                    break;
+                    
+                case 'Enter':
+                    if (activeElement.classList.contains('movie-item')) {
+                        e.preventDefault();
+                        playMovie(activeElement.dataset.slug);
+                    }
+                    break;
+            }
+        }
+
+        // Navigate Horizontally (Left/Right)
+        function navigateHorizontal(direction) {
+            const activeElement = document.activeElement;
+            const allFocusable = Array.from(document.querySelectorAll(focusableSelectors));
+            const currentIndex = allFocusable.indexOf(activeElement);
+            
+            if (currentIndex === -1) {
+                // No focus yet, focus first element
+                const first = allFocusable[0];
+                if (first) {
+                    first.focus();
+                    scrollIntoView(first);
+                }
+                return;
+            }
+
+            let nextElement = null;
+
+            if (activeElement.classList.contains('movie-item')) {
+                // Navigate within movie row
+                const movieRow = document.getElementById('movieRow');
+                const movies = Array.from(movieRow.querySelectorAll('.movie-item'));
+                const movieIndex = movies.indexOf(activeElement);
+                
+                if (direction === 'right' && movieIndex < movies.length - 1) {
+                    nextElement = movies[movieIndex + 1];
+                } else if (direction === 'left' && movieIndex > 0) {
+                    nextElement = movies[movieIndex - 1];
+                }
+            } else if (activeElement.classList.contains('nav-item')) {
+                // Navigate between nav items
+                const navItems = Array.from(document.querySelectorAll('.nav-item'));
+                const navIndex = navItems.indexOf(activeElement);
+                
+                if (direction === 'right' && navIndex < navItems.length - 1) {
+                    nextElement = navItems[navIndex + 1];
+                } else if (direction === 'left' && navIndex > 0) {
+                    nextElement = navItems[navIndex - 1];
+                } else if (direction === 'down') {
+                    // Move to first movie
+                    const firstMovie = document.querySelector('.movie-item');
+                    if (firstMovie) nextElement = firstMovie;
+                }
+            }
+
+            if (nextElement) {
+                nextElement.focus();
+                scrollIntoView(nextElement);
+            }
+        }
+
+        // Navigate Vertically (Up/Down)
+        function navigateVertical(direction) {
+            const activeElement = document.activeElement;
+            const allFocusable = Array.from(document.querySelectorAll(focusableSelectors));
+            
+            let nextElement = null;
+
+            if (activeElement.classList.contains('nav-item')) {
+                if (direction === 'down') {
+                    // Move to first movie
+                    const firstMovie = document.querySelector('.movie-item');
+                    if (firstMovie) nextElement = firstMovie;
+                }
+            } else if (activeElement.classList.contains('movie-item')) {
+                if (direction === 'up') {
+                    // Move to nav
+                    const activeNav = document.querySelector('.nav-item.active') || document.querySelector('.nav-item');
+                    if (activeNav) nextElement = activeNav;
+                }
+            }
+
+            if (nextElement) {
+                nextElement.focus();
+                scrollIntoView(nextElement);
+            }
+        }
+
+        // Scroll element into view with offset for TV display
+        function scrollIntoView(element) {
+            if (element.classList.contains('movie-item')) {
+                // Scroll horizontally within row
+                const movieRow = document.getElementById('movieRow');
+                const elementRect = element.getBoundingClientRect();
+                const rowRect = movieRow.getBoundingClientRect();
+                
+                // Calculate scroll position to center the element
+                const scrollLeft = element.offsetLeft - (rowRect.width / 2) + (element.offsetWidth / 2);
+                
+                movieRow.scrollTo({
+                    left: scrollLeft,
+                    behavior: 'smooth'
+                });
+                
+                // Also ensure vertical visibility
+                element.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            } else {
+                element.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        }
+
+        // Prevent default scrolling with arrow keys
+        window.addEventListener('keydown', (e) => {
+            if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+                const modal = document.getElementById('modalOverlay');
+                if (!modal.classList.contains('active')) {
+                    e.preventDefault();
+                }
+            }
+        }, { passive: false });
+    </script>
+</body>
+</html>
