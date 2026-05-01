@@ -143,8 +143,7 @@
         }
 
         .movie-item:focus .movie-info {
-            opacity: 0;
-            pointer-events: none;
+            display: none;
         }
 
         .movie-title {
@@ -614,6 +613,11 @@
                     : `${API_BASE}/danh-sach/phim-moi-cap-nhat?page=${page}`;
                     
                 const response = await fetch(url);
+                
+                if (!response.ok) {
+                    throw new Error(`API error: ${response.status}`);
+                }
+                
                 const data = await response.json();
                 
                 if (data.status === true && data.items && Array.isArray(data.items)) {
@@ -635,15 +639,35 @@
                         const firstNav = document.querySelector('.nav-item');
                         if (firstNav) firstNav.focus();
                     }, 100);
+                } else if (isSearching) {
+                    // Search returned no results
+                    if (!append) {
+                        mainContent.innerHTML = 
+                            `<div class="error-message">Không tìm thấy kết quả cho "${searchQuery}". <button tabindex="0" onclick="clearSearch()">Xóa tìm kiếm</button></div>`;
+                    }
                 } else {
                     throw new Error('Invalid data format');
                 }
             } catch (error) {
                 if (!append) {
-                    mainContent.innerHTML = 
-                        `<div class="error-message">Lỗi tải phim: ${error.message}. <button tabindex="0" onclick="loadMovies()">Thử lại</button></div>`;
+                    if (isSearching) {
+                        mainContent.innerHTML = 
+                            `<div class="error-message">Lỗi tìm kiếm. <button tabindex="0" onclick="clearSearch()">Xóa tìm kiếm</button></div>`;
+                    } else {
+                        mainContent.innerHTML = 
+                            `<div class="error-message">Lỗi tải phim: ${error.message}. <button tabindex="0" onclick="loadMovies()">Thử lại</button></div>`;
+                    }
                 }
             }
+        }
+
+        // Clear search and load default movies
+        function clearSearch() {
+            isSearching = false;
+            searchQuery = '';
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) searchInput.value = '';
+            loadMovies(1, false);
         }
 
         // Get continue watching list
@@ -699,7 +723,7 @@
                             <div class="progress-indicator-bar" style="width: ${progress}%"></div>
                         </div>
                     ` : ''}
-                    <div class="movie-details">
+                    <div class="movie-details" aria-hidden="true">
                         <div class="movie-details-title">${movie.name}</div>
                         <div class="movie-details-meta">
                             ${movie.year || ''} ${movie.time ? '• ' + movie.time : ''} 
@@ -707,10 +731,6 @@
                             ${movie.episode_current ? '• ' + movie.episode_current : ''}
                         </div>
                         <div class="movie-details-desc">${movie.content || 'Không có mô tả'}</div>
-                    </div>
-                    <div class="movie-info" aria-hidden="true">
-                        <div class="movie-title">${movie.name}</div>
-                        <div class="movie-meta">${movie.year || ''} ${movie.time ? '• ' + movie.time : ''}</div>
                     </div>
                 </div>
             `;
@@ -1160,6 +1180,11 @@
             // Keyboard controls for video
             video.onkeydown = (e) => {
                 switch(e.key) {
+                    case 'Escape':
+                    case 'Backspace':
+                        e.preventDefault();
+                        closeModal();
+                        break;
                     case 'Enter':
                     case ' ':
                         e.preventDefault();
@@ -1262,9 +1287,15 @@
             
             // If modal is open - handle video controls
             if (modal.classList.contains('active')) {
+                const video = document.getElementById('videoPlayer');
                 const videoControls = document.querySelectorAll('.control-btn, .modal-close');
                 const activeElement = document.activeElement;
                 const currentIndex = Array.from(videoControls).indexOf(activeElement);
+                
+                // If video is focused, let video.onkeydown handle arrow keys
+                if (activeElement === video) {
+                    return;
+                }
                 
                 switch(e.key) {
                     case 'Escape':
@@ -1297,7 +1328,7 @@
                     case 'ArrowDown':
                         e.preventDefault();
                         // Focus video player to use video shortcuts
-                        document.getElementById('videoPlayer').focus();
+                        video.focus();
                         return;
                         
                     case 'Enter':
@@ -1311,6 +1342,12 @@
             const activeElement = document.activeElement;
             
             switch(e.key) {
+                case 's':
+                case 'S':
+                    e.preventDefault();
+                    document.getElementById('searchInput').focus();
+                    break;
+                    
                 case 'ArrowRight':
                     e.preventDefault();
                     navigateHorizontal('right');
@@ -1366,6 +1403,10 @@
                 
                 if (direction === 'right' && movieIndex < movies.length - 1) {
                     nextElement = movies[movieIndex + 1];
+                } else if (direction === 'right' && movieIndex === movies.length - 1) {
+                    // At last movie, move to load more button
+                    const loadMoreBtn = document.getElementById('loadMoreBtn');
+                    if (loadMoreBtn) nextElement = loadMoreBtn;
                 } else if (direction === 'left' && movieIndex > 0) {
                     nextElement = movies[movieIndex - 1];
                 }
