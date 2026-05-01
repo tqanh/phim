@@ -283,12 +283,7 @@ function handleKeyNavigation(e) {
                     return;
                 case 'ArrowRight':
                     e.preventDefault();
-                    // If at last control, go to episode panel
-                    if (controlIndex === videoControls.length - 1 && episodeItems.length > 0) {
-                        const activeEpisode = document.querySelector('.episode-item.active') || episodeItems[0];
-                        activeEpisode.focus();
-                        activeEpisode.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    } else if (controlIndex < videoControls.length - 1) {
+                    if (controlIndex < videoControls.length - 1) {
                         videoControls[controlIndex + 1].focus();
                     }
                     return;
@@ -296,17 +291,19 @@ function handleKeyNavigation(e) {
                     e.preventDefault();
                     if (controlIndex > 0) {
                         videoControls[controlIndex - 1].focus();
+                    } else {
+                        // At first control, go back to video
+                        video.focus();
                     }
+                    return;
+                case 'ArrowUp':
+                    e.preventDefault();
+                    // Go back to video player
+                    video.focus();
                     return;
                 case 'ArrowDown':
                     e.preventDefault();
-                    // Focus video player
-                    video.focus();
-                    return;
-                case 'e':
-                case 'E':
-                    e.preventDefault();
-                    // Focus episode panel
+                    // Go to episode panel
                     const epToFocus = document.querySelector('.episode-item.active') || episodeItems[0];
                     if (epToFocus) {
                         epToFocus.focus();

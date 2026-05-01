@@ -158,9 +158,15 @@ function renderEpisodeList(episodes, activeIndex, slug) {
                     break;
                 case 'ArrowLeft':
                     e.preventDefault();
-                    // Go back to video player
-                    const video = document.getElementById('videoPlayer');
-                    if (video) video.focus();
+                    // Go back to control buttons
+                    const firstControlBtn = document.querySelector('.control-btn');
+                    if (firstControlBtn) firstControlBtn.focus();
+                    break;
+                case 'ArrowUp':
+                    e.preventDefault();
+                    // Go back to control buttons
+                    const controlBtn = document.querySelector('.control-btn');
+                    if (controlBtn) controlBtn.focus();
                     break;
                 case 'Backspace':
                 case 'Escape':
@@ -481,28 +487,25 @@ function setupVideoPlayer(videoUrl, movieName, slug, episodeId) {
                 break;
             case 'ArrowUp':
                 e.preventDefault();
-                video.volume = Math.min(1, video.volume + 0.1);
-                showVolumeIndicator(video.volume);
+                // Focus first control button
+                const firstControl = document.querySelector('.control-btn');
+                if (firstControl) firstControl.focus();
                 break;
             case 'ArrowDown':
                 e.preventDefault();
-                video.volume = Math.max(0, video.volume - 0.1);
-                showVolumeIndicator(video.volume);
+                // Focus episode panel
+                const epPanel = document.getElementById('episodePanel');
+                const episodeToFocus = document.querySelector('.episode-item.active') || 
+                                       document.querySelector('.episode-item');
+                if (epPanel && epPanel.style.display !== 'none' && episodeToFocus) {
+                    episodeToFocus.focus();
+                    episodeToFocus.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
                 break;
             case 'f':
             case 'F':
                 e.preventDefault();
                 toggleFullscreen();
-                break;
-            case 'e':
-            case 'E':
-                e.preventDefault();
-                // Focus episode panel
-                const episodeToFocus = document.querySelector('.episode-item.active');
-                if (episodeToFocus) {
-                    episodeToFocus.focus();
-                    episodeToFocus.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }
                 break;
             case 'n':
             case 'N':
