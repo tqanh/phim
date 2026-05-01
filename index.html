@@ -1446,10 +1446,19 @@
                     if (firstMovie) nextElement = firstMovie;
                 }
             } else if (activeElement.classList.contains('movie-item')) {
+                const continueRow = document.getElementById('continueRow');
+                const movieRow = document.getElementById('movieRow');
+                
                 if (direction === 'up') {
                     // Move to nav
                     const activeNav = document.querySelector('.nav-item.active') || document.querySelector('.nav-item');
                     if (activeNav) nextElement = activeNav;
+                } else if (direction === 'down') {
+                    // If in continue watching section, move to first movie in new movies section
+                    if (continueRow && continueRow.contains(activeElement)) {
+                        const firstNewMovie = movieRow.querySelector('.movie-item');
+                        if (firstNewMovie) nextElement = firstNewMovie;
+                    }
                 }
             }
 
