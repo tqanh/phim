@@ -328,6 +328,36 @@
             opacity: 1;
         }
 
+        /* Resume notification */
+        .resume-notification {
+            position: absolute;
+            top: 20%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(229, 9, 20, 0.95);
+            color: #fff;
+            padding: 20px 40px;
+            border-radius: 12px;
+            font-size: 22px;
+            font-weight: bold;
+            z-index: 200;
+            animation: fadeInOut 5s ease-in-out;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        }
+
+        .resume-content {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+            10% { opacity: 1; transform: translateX(-50%) translateY(0); }
+            90% { opacity: 1; transform: translateX(-50%) translateY(0); }
+            100% { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+        }
+
         /* Video player focus state */
         .video-player:focus {
             outline: none;
@@ -394,7 +424,12 @@
         let movies = [];
         let focusedElement = null;
         let currentSection = 'movies';
+        let currentMovieSlug = null;
+        let currentEpisodeId = null;
         const focusableSelectors = '.nav-item, .movie-item, .modal-close';
+        
+        // Resume playback storage key
+        const STORAGE_KEY = 'phimTV_watchProgress';
 
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
@@ -475,6 +510,7 @@
                 if (data.status === true && data.episodes && Array.isArray(data.episodes)) {
                     const episodes = data.episodes;
                     let videoUrl = null;
+                    let episodeId = null;
                     
                     // Find first available video URL (prefer m3u8 over embed)
                     for (const server of episodes) {
@@ -482,12 +518,15 @@
                             const firstEp = server.server_data[0];
                             // Prefer m3u8 for native player, fallback to embed
                             videoUrl = firstEp.link_m3u8 || firstEp.link_embed;
+                            episodeId = firstEp.slug || 'ep1';
                             if (videoUrl) break;
                         }
                     }
                     
                     if (videoUrl) {
-                        openModal(videoUrl, data.movie?.name || 'Phim');
+                        currentMovieSlug = slug;
+                        currentEpisodeId = episodeId;
+                        openModal(videoUrl, data.movie?.name || 'Phim', slug, episodeId);
                     } else {
                         alert('Không tìm thấy link phim!');
                     }
@@ -499,28 +538,85 @@
             }
         }
 
+        // Save watch progress to localStorage
+        function saveWatchProgress(slug, episodeId, currentTime, duration) {
+            try {
+                const progress = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+                progress[`${slug}_${episodeId}`] = {
+                    currentTime: currentTime,
+                    duration: duration,
+                    timestamp: Date.now()
+                };
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
+            } catch (e) {
+                console.error('Failed to save watch progress:', e);
+            }
+        }
+
+        // Load watch progress from localStorage
+        function loadWatchProgress(slug, episodeId) {
+            try {
+                const progress = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+                const saved = progress[`${slug}_${episodeId}`];
+                if (saved && saved.duration > 0) {
+                    // Resume if not at the end (within last 2 minutes or 95%)
+                    const threshold = Math.min(120, saved.duration * 0.05);
+                    if (saved.currentTime < saved.duration - threshold) {
+                        return saved.currentTime;
+                    }
+                }
+            } catch (e) {
+                console.error('Failed to load watch progress:', e);
+            }
+            return 0;
+        }
+
+        // Show resume notification
+        function showResumeNotification(currentTime) {
+            const minutes = Math.floor(currentTime / 60);
+            const seconds = Math.floor(currentTime % 60);
+            const timeStr = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            
+            // Create temporary notification
+            const notification = document.createElement('div');
+            notification.className = 'resume-notification';
+            notification.innerHTML = `
+                <div class="resume-content">
+                    <span>▶ Tiếp tục xem từ ${timeStr}</span>
+                </div>
+            `;
+            document.querySelector('.video-container')?.appendChild(notification);
+            
+            // Remove after 5 seconds
+            setTimeout(() => {
+                notification.remove();
+            }, 5000);
+        }
+
         // Video Player Variables
         let hls = null;
         let currentVideoUrl = null;
 
         // Open Modal with Video Player
-        function openModal(videoUrl, movieName) {
+        function openModal(videoUrl, movieName, slug, episodeId) {
             const modal = document.getElementById('modalOverlay');
             const video = document.getElementById('videoPlayer');
             const closeBtn = document.getElementById('modalClose');
             
             currentVideoUrl = videoUrl;
+            currentMovieSlug = slug;
+            currentEpisodeId = episodeId;
             modal.classList.add('active');
             
-            // Setup video player
-            setupVideoPlayer(videoUrl, movieName);
+            // Setup video player with resume support
+            setupVideoPlayer(videoUrl, movieName, slug, episodeId);
             
             // Focus close button initially
             setTimeout(() => closeBtn.focus(), 100);
         }
 
-        // Setup Video Player with HLS support
-        function setupVideoPlayer(videoUrl, movieName) {
+        // Setup Video Player with HLS support and resume playback
+        function setupVideoPlayer(videoUrl, movieName, slug, episodeId) {
             const video = document.getElementById('videoPlayer');
             const playPauseBtn = document.getElementById('playPauseBtn');
             const seekBackBtn = document.getElementById('seekBackBtn');
@@ -530,11 +626,14 @@
             const progressBar = document.getElementById('progressBar');
             const progressContainer = document.getElementById('progressContainer');
             
+            // Load saved progress
+            const savedTime = loadWatchProgress(slug, episodeId);
+            
             // Reset video
             video.pause();
             video.currentTime = 0;
             
-            // Setup HLS or native playback
+            // Setup HLS or native playback with resume support
             if (videoUrl.includes('.m3u8') && Hls.isSupported()) {
                 // Destroy previous HLS instance
                 if (hls) {
@@ -551,6 +650,11 @@
                 hls.attachMedia(video);
                 
                 hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                    // Resume from saved position
+                    if (savedTime > 0) {
+                        video.currentTime = savedTime;
+                        showResumeNotification(savedTime);
+                    }
                     video.play().catch(() => {
                         // Auto-play blocked, user needs to press play
                     });
@@ -566,6 +670,11 @@
                 // Native playback for non-HLS
                 video.src = videoUrl;
                 video.load();
+                // Resume from saved position
+                if (savedTime > 0) {
+                    video.currentTime = savedTime;
+                    showResumeNotification(savedTime);
+                }
                 video.play().catch(() => {
                     // Auto-play blocked
                 });
@@ -586,6 +695,31 @@
             video.addEventListener('loadedmetadata', updateTimeDisplay);
             video.addEventListener('play', updatePlayPauseButton);
             video.addEventListener('pause', updatePlayPauseButton);
+            
+            // Save progress every 10 seconds
+            const saveInterval = setInterval(() => {
+                if (!video.paused && video.currentTime > 0 && slug && episodeId) {
+                    saveWatchProgress(slug, episodeId, video.currentTime, video.duration || 0);
+                }
+            }, 10000);
+            
+            // Save on pause and beforeunload
+            video.addEventListener('pause', () => {
+                if (slug && episodeId) {
+                    saveWatchProgress(slug, episodeId, video.currentTime, video.duration || 0);
+                }
+            });
+            
+            // Clean up interval on close
+            const originalCloseModal = closeModal;
+            closeModal = function() {
+                clearInterval(saveInterval);
+                // Final save before closing
+                if (slug && episodeId && video.currentTime > 0) {
+                    saveWatchProgress(slug, episodeId, video.currentTime, video.duration || 0);
+                }
+                originalCloseModal();
+            };
             
             // Play/Pause
             function togglePlayPause() {
