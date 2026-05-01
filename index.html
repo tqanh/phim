@@ -60,8 +60,10 @@
         }
 
         .nav-item:focus {
-            background: rgba(255,255,255,0.2);
-            transform: scale(1.05);
+            background: rgba(255,255,255,0.3);
+            transform: scale(1.1);
+            box-shadow: 0 0 0 4px #e50914, 0 0 20px rgba(229, 9, 20, 0.5);
+            font-weight: bold;
         }
 
         .nav-item.active {
@@ -119,9 +121,9 @@
         }
 
         .movie-item:focus {
-            transform: scale(1.1);
-            box-shadow: 0 0 0 4px #fff, 0 0 20px rgba(255,255,255,0.5);
-            z-index: 10;
+            transform: scale(1.15);
+            box-shadow: 0 0 0 6px #e50914, 0 0 30px rgba(229, 9, 20, 0.6);
+            z-index: 100;
         }
 
         .movie-poster {
@@ -218,8 +220,9 @@
         }
 
         .modal-close:focus {
-            transform: scale(1.1);
-            box-shadow: 0 0 0 3px #fff;
+            transform: scale(1.2);
+            box-shadow: 0 0 0 5px #e50914, 0 0 25px rgba(229, 9, 20, 0.6);
+            background: #e50914;
         }
 
         /* Custom Video Player for TV Box */
@@ -272,8 +275,8 @@
         .control-btn:focus {
             background: #e50914;
             border-color: #fff;
-            transform: scale(1.05);
-            box-shadow: 0 0 15px rgba(229, 9, 20, 0.5);
+            transform: scale(1.15);
+            box-shadow: 0 0 0 4px #fff, 0 0 20px rgba(255,255,255,0.5);
         }
 
         .time-display {
@@ -392,9 +395,10 @@
         }
 
         .search-input:focus {
-            background: rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.3);
             border-color: #e50914;
-            box-shadow: 0 0 15px rgba(229, 9, 20, 0.3);
+            box-shadow: 0 0 0 4px #e50914, 0 0 20px rgba(229, 9, 20, 0.5);
+            transform: scale(1.02);
         }
 
         .search-input::placeholder {
@@ -512,8 +516,10 @@
         }
 
         .load-more-btn:focus {
-            transform: scale(1.05);
-            box-shadow: 0 0 0 3px #fff, 0 0 20px rgba(229, 9, 20, 0.5);
+            transform: scale(1.1);
+            box-shadow: 0 0 0 5px #e50914, 0 0 30px rgba(229, 9, 20, 0.6);
+            background: #e50914;
+            color: #fff;
         }
 
         /* No Results */
@@ -522,6 +528,72 @@
             padding: 60px;
             font-size: 20px;
             color: #a3a3a3;
+        }
+
+        /* TV Box Help Overlay */
+        .tv-help-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        .tv-help-overlay.active {
+            display: flex;
+        }
+
+        .tv-help-content {
+            background: #1a1a1a;
+            border-radius: 16px;
+            padding: 40px 60px;
+            max-width: 800px;
+            border: 3px solid #e50914;
+            box-shadow: 0 0 50px rgba(229, 9, 20, 0.5);
+        }
+
+        .tv-help-content h2 {
+            color: #e50914;
+            font-size: 32px;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .tv-help-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px 40px;
+            margin-bottom: 30px;
+        }
+
+        .tv-help-item {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            font-size: 20px;
+        }
+
+        .tv-key {
+            background: #333;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: bold;
+            color: #e50914;
+            min-width: 140px;
+            text-align: center;
+            border: 2px solid #555;
+        }
+
+        .tv-help-close {
+            text-align: center;
+            color: #888;
+            font-size: 18px;
+            margin-top: 20px;
         }
     </style>
 </head>
@@ -569,6 +641,48 @@
         </div>
     </div>
 
+    <!-- TV Box Help Overlay -->
+    <div class="tv-help-overlay" id="tvHelpOverlay">
+        <div class="tv-help-content">
+            <h2>Hướng Dẫn Điều Khiển (TV Box)</h2>
+            <div class="tv-help-grid">
+                <div class="tv-help-item">
+                    <span class="tv-key">⬆⬇⬅➡</span>
+                    <span>Di chuyển</span>
+                </div>
+                <div class="tv-help-item">
+                    <span class="tv-key">OK / Enter</span>
+                    <span>Chọn / Play</span>
+                </div>
+                <div class="tv-help-item">
+                    <span class="tv-key">Back</span>
+                    <span>Quay lại / Thoát</span>
+                </div>
+                <div class="tv-help-item">
+                    <span class="tv-key">S</span>
+                    <span>Tìm kiếm</span>
+                </div>
+                <div class="tv-help-item">
+                    <span class="tv-key">⬅ ➡ (Video)</span>
+                    <span>Tua 10s</span>
+                </div>
+                <div class="tv-help-item">
+                    <span class="tv-key">⬆ ⬇ (Video)</span>
+                    <span>Âm lượng</span>
+                </div>
+                <div class="tv-help-item">
+                    <span class="tv-key">F</span>
+                    <span>Toàn màn hình</span>
+                </div>
+                <div class="tv-help-item">
+                    <span class="tv-key">H</span>
+                    <span>Hiện/Ẩn hướng dẫn</span>
+                </div>
+            </div>
+            <p class="tv-help-close">Nhấn OK hoặc Back để đóng</p>
+        </div>
+    </div>
+
     <!-- HLS.js for m3u8 support -->
     <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.0/dist/hls.min.js"></script>
 
@@ -597,6 +711,14 @@
             loadMovies();
             setupNavigation();
             setupSearch();
+
+            // Auto-focus first element for TV Box
+            setTimeout(() => {
+                const firstNav = document.querySelector('.nav-item');
+                if (firstNav) {
+                    firstNav.focus();
+                }
+            }, 500);
         });
 
         // Load Movies from API with pagination
@@ -1308,53 +1430,70 @@
         // Handle Keyboard Navigation
         function handleKeyNavigation(e) {
             const modal = document.getElementById('modalOverlay');
-            
+            const helpOverlay = document.getElementById('tvHelpOverlay');
+
+            // Handle TV Help Overlay
+            if (helpOverlay.classList.contains('active')) {
+                if (e.key === 'Escape' || e.key === 'Backspace' || e.key === 'Enter') {
+                    e.preventDefault();
+                    helpOverlay.classList.remove('active');
+                }
+                return;
+            }
+
+            // Toggle TV Help with H key
+            if (e.key === 'h' || e.key === 'H') {
+                e.preventDefault();
+                helpOverlay.classList.toggle('active');
+                return;
+            }
+
             // If modal is open - handle video controls
             if (modal.classList.contains('active')) {
                 const video = document.getElementById('videoPlayer');
                 const videoControls = document.querySelectorAll('.control-btn, .modal-close');
                 const activeElement = document.activeElement;
                 const currentIndex = Array.from(videoControls).indexOf(activeElement);
-                
+
                 // If video is focused, let video.onkeydown handle arrow keys
                 if (activeElement === video) {
                     return;
                 }
-                
+
                 switch(e.key) {
                     case 'Escape':
                     case 'Backspace':
                         e.preventDefault();
                         closeModal();
                         return;
-                        
+
                     case 'Tab':
                         e.preventDefault();
                         // Cycle through controls
                         const nextIndex = (currentIndex + 1) % videoControls.length;
                         videoControls[nextIndex].focus();
                         return;
-                        
+
                     case 'ArrowRight':
                         e.preventDefault();
                         if (currentIndex < videoControls.length - 1) {
                             videoControls[currentIndex + 1].focus();
                         }
                         return;
-                        
+
                     case 'ArrowLeft':
                         e.preventDefault();
                         if (currentIndex > 0) {
                             videoControls[currentIndex - 1].focus();
                         }
                         return;
-                        
+
                     case 'ArrowDown':
                         e.preventDefault();
                         // Focus video player to use video shortcuts
                         video.focus();
                         return;
-                        
+
                     case 'Enter':
                         // Allow default button click behavior
                         return;
@@ -1364,34 +1503,34 @@
 
             // Main navigation when modal is closed
             const activeElement = document.activeElement;
-            
+
             switch(e.key) {
                 case 's':
                 case 'S':
                     e.preventDefault();
                     document.getElementById('searchInput').focus();
                     break;
-                    
+
                 case 'ArrowRight':
                     e.preventDefault();
                     navigateHorizontal('right');
                     break;
-                    
+
                 case 'ArrowLeft':
                     e.preventDefault();
                     navigateHorizontal('left');
                     break;
-                    
+
                 case 'ArrowDown':
                     e.preventDefault();
                     navigateVertical('down');
                     break;
-                    
+
                 case 'ArrowUp':
                     e.preventDefault();
                     navigateVertical('up');
                     break;
-                    
+
                 case 'Enter':
                     if (activeElement.classList.contains('movie-item')) {
                         e.preventDefault();
