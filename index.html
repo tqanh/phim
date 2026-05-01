@@ -1448,6 +1448,7 @@
             } else if (activeElement.classList.contains('movie-item')) {
                 const continueRow = document.getElementById('continueRow');
                 const movieRow = document.getElementById('movieRow');
+                const loadMoreBtn = document.getElementById('loadMoreBtn');
                 
                 if (direction === 'up') {
                     // Move to nav
@@ -1458,6 +1459,10 @@
                     if (continueRow && continueRow.contains(activeElement)) {
                         const firstNewMovie = movieRow.querySelector('.movie-item');
                         if (firstNewMovie) nextElement = firstNewMovie;
+                    }
+                    // If in new movies section, move to load more button
+                    else if (movieRow && movieRow.contains(activeElement) && loadMoreBtn) {
+                        nextElement = loadMoreBtn;
                     }
                 }
             }
