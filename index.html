@@ -1465,6 +1465,13 @@
                         nextElement = loadMoreBtn;
                     }
                 }
+            } else if (activeElement.id === 'loadMoreBtn') {
+                const movieRow = document.getElementById('movieRow');
+                if (direction === 'up' && movieRow) {
+                    // Move to last movie in new movies section
+                    const movies = Array.from(movieRow.querySelectorAll('.movie-item'));
+                    if (movies.length > 0) nextElement = movies[movies.length - 1];
+                }
             }
 
             if (nextElement) {
