@@ -128,13 +128,46 @@ function renderEpisodeList(episodes, activeIndex, slug) {
         `;
     }).join('');
     
-    // Add click handlers to episode items
-    episodeList.querySelectorAll('.episode-item').forEach((item, index) => {
+    // Add click and keyboard handlers to episode items
+    const items = episodeList.querySelectorAll('.episode-item');
+    items.forEach((item, index) => {
         item.addEventListener('click', () => playEpisode(index));
         item.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                playEpisode(index);
+            const currentIndex = parseInt(item.dataset.episodeIndex);
+            
+            switch(e.key) {
+                case 'Enter':
+                    e.preventDefault();
+                    playEpisode(index);
+                    break;
+                case 'ArrowUp':
+                    e.preventDefault();
+                    // Focus previous episode
+                    if (currentIndex > 0) {
+                        items[currentIndex - 1].focus();
+                        items[currentIndex - 1].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                    break;
+                case 'ArrowDown':
+                    e.preventDefault();
+                    // Focus next episode
+                    if (currentIndex < items.length - 1) {
+                        items[currentIndex + 1].focus();
+                        items[currentIndex + 1].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                    break;
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    // Go back to video player
+                    const video = document.getElementById('videoPlayer');
+                    if (video) video.focus();
+                    break;
+                case 'Backspace':
+                case 'Escape':
+                    e.preventDefault();
+                    // Close modal
+                    closeModal();
+                    break;
             }
         });
     });
@@ -437,7 +470,14 @@ function setupVideoPlayer(videoUrl, movieName, slug, episodeId) {
                 break;
             case 'ArrowRight':
                 e.preventDefault();
-                seek(10);
+                // If episode panel exists and has items, focus the active episode
+                const episodePanel = document.getElementById('episodePanel');
+                const activeEpisode = document.querySelector('.episode-item.active');
+                if (episodePanel && episodePanel.style.display !== 'none' && activeEpisode) {
+                    activeEpisode.focus();
+                } else {
+                    seek(10);
+                }
                 break;
             case 'ArrowUp':
                 e.preventDefault();
@@ -453,6 +493,16 @@ function setupVideoPlayer(videoUrl, movieName, slug, episodeId) {
             case 'F':
                 e.preventDefault();
                 toggleFullscreen();
+                break;
+            case 'e':
+            case 'E':
+                e.preventDefault();
+                // Focus episode panel
+                const episodeToFocus = document.querySelector('.episode-item.active');
+                if (episodeToFocus) {
+                    episodeToFocus.focus();
+                    episodeToFocus.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
                 break;
             case 'n':
             case 'N':

@@ -223,53 +223,109 @@ function handleKeyNavigation(e) {
     if (modal.classList.contains('active')) {
         const video = document.getElementById('videoPlayer');
         const videoControls = document.querySelectorAll('.control-btn, .modal-close');
+        const episodeItems = document.querySelectorAll('.episode-item');
         const activeElement = document.activeElement;
-        const currentIndex = Array.from(videoControls).indexOf(activeElement);
+        const controlIndex = Array.from(videoControls).indexOf(activeElement);
+        const episodeIndex = Array.from(episodeItems).indexOf(activeElement);
 
         // If video is focused, let video.onkeydown handle arrow keys
         if (activeElement === video) {
             return;
         }
 
-        switch(e.key) {
-            case 'Escape':
-            case 'Backspace':
-                e.preventDefault();
-                closeModal();
-                return;
-
-            case 'Tab':
-                e.preventDefault();
-                // Cycle through controls
-                const nextIndex = (currentIndex + 1) % videoControls.length;
-                videoControls[nextIndex].focus();
-                return;
-
-            case 'ArrowRight':
-                e.preventDefault();
-                if (currentIndex < videoControls.length - 1) {
-                    videoControls[currentIndex + 1].focus();
-                }
-                return;
-
-            case 'ArrowLeft':
-                e.preventDefault();
-                if (currentIndex > 0) {
-                    videoControls[currentIndex - 1].focus();
-                }
-                return;
-
-            case 'ArrowDown':
-                e.preventDefault();
-                // Focus video player to use video shortcuts
-                video.focus();
-                return;
-
-            case 'Enter':
-                // Allow default button click behavior
-                return;
+        // If episode item is focused
+        if (episodeIndex >= 0) {
+            switch(e.key) {
+                case 'Escape':
+                case 'Backspace':
+                    e.preventDefault();
+                    closeModal();
+                    return;
+                case 'ArrowUp':
+                    e.preventDefault();
+                    if (episodeIndex > 0) {
+                        episodeItems[episodeIndex - 1].focus();
+                        episodeItems[episodeIndex - 1].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                    return;
+                case 'ArrowDown':
+                    e.preventDefault();
+                    if (episodeIndex < episodeItems.length - 1) {
+                        episodeItems[episodeIndex + 1].focus();
+                        episodeItems[episodeIndex + 1].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                    return;
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    // Go back to video controls
+                    videoControls[0]?.focus();
+                    return;
+                case 'Enter':
+                    // Play the episode - handled by episode item's own listener
+                    return;
+            }
+            return;
         }
-        return;
+
+        // If control button is focused
+        if (controlIndex >= 0) {
+            switch(e.key) {
+                case 'Escape':
+                case 'Backspace':
+                    e.preventDefault();
+                    closeModal();
+                    return;
+                case 'Tab':
+                    e.preventDefault();
+                    // Cycle through controls
+                    const nextIndex = (controlIndex + 1) % videoControls.length;
+                    videoControls[nextIndex].focus();
+                    return;
+                case 'ArrowRight':
+                    e.preventDefault();
+                    // If at last control, go to episode panel
+                    if (controlIndex === videoControls.length - 1 && episodeItems.length > 0) {
+                        const activeEpisode = document.querySelector('.episode-item.active') || episodeItems[0];
+                        activeEpisode.focus();
+                        activeEpisode.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    } else if (controlIndex < videoControls.length - 1) {
+                        videoControls[controlIndex + 1].focus();
+                    }
+                    return;
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    if (controlIndex > 0) {
+                        videoControls[controlIndex - 1].focus();
+                    }
+                    return;
+                case 'ArrowDown':
+                    e.preventDefault();
+                    // Focus video player
+                    video.focus();
+                    return;
+                case 'e':
+                case 'E':
+                    e.preventDefault();
+                    // Focus episode panel
+                    const epToFocus = document.querySelector('.episode-item.active') || episodeItems[0];
+                    if (epToFocus) {
+                        epToFocus.focus();
+                        epToFocus.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                    return;
+                case 'Enter':
+                    // Allow default button click behavior
+                    return;
+            }
+            return;
+        }
+
+        // Default: focus video player on any arrow key if nothing focused
+        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+            e.preventDefault();
+            video.focus();
+            return;
+        }
     }
 
     // Main navigation when modal is closed
