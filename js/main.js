@@ -222,7 +222,7 @@ function handleKeyNavigation(e) {
     // If modal is open - handle video controls
     if (modal.classList.contains('active')) {
         const video = document.getElementById('videoPlayer');
-        const videoControls = document.querySelectorAll('.control-btn, .modal-close');
+        const videoControls = document.querySelectorAll('.control-btn');
         const episodeItems = document.querySelectorAll('.episode-item');
         const activeElement = document.activeElement;
         const controlIndex = Array.from(videoControls).indexOf(activeElement);
@@ -275,10 +275,11 @@ function handleKeyNavigation(e) {
                     return;
                 case 'ArrowRight':
                     e.preventDefault();
-                    // Find next enabled control button
-                    for (let i = controlIndex + 1; i < videoControls.length; i++) {
-                        if (!videoControls[i].disabled) {
-                            videoControls[i].focus();
+                    // Find next enabled control button (cycle to beginning if at end)
+                    for (let i = 1; i < videoControls.length; i++) {
+                        const nextIndex = (controlIndex + i) % videoControls.length;
+                        if (!videoControls[nextIndex].disabled) {
+                            videoControls[nextIndex].focus();
                             break;
                         }
                     }
