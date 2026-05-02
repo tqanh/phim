@@ -348,6 +348,9 @@ export function playEpisode(index) {
 
     // Setup new video
     setupVideoPlayer(videoUrl, movieName, currentMovieSlug, episodeSlug);
+    
+    // Update episode navigation buttons state
+    setupEpisodeNavigation();
 
     // Remove loading indicator when video starts playing
     video.addEventListener('loadeddata', () => {
