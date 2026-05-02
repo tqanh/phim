@@ -11,7 +11,7 @@ import { renderMoviesWithSections, appendMovies, showLoading, showError, clearSe
 import { openModal, closeModal } from './video-player.js';
 import { fetchMovieDetails } from './api.js';
 import { setupTVHelp, isHelpOverlayActive, closeHelpOverlay } from './tv-help.js';
-import { addToRecentlyViewed } from './storage.js';
+import { addToRecentlyViewed, addSearchHistory, getSearchHistory, clearSearchHistory } from './storage.js';
 
 // Initialize app
 document.addEventListener('DOMContentLoaded', () => {
@@ -20,6 +20,16 @@ document.addEventListener('DOMContentLoaded', () => {
     setupSearch(handleSearch);
     setupTVFocusIndicator();
     setupTVHelp();
+    setupFilterChips();
+    
+    // Search history dropdown
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        searchInput.addEventListener('focus', showSearchHistory);
+        searchInput.addEventListener('blur', () => {
+            setTimeout(hideSearchHistory, 200);
+        });
+    }
     
     // Auto-focus first element for TV Box
     setTimeout(() => {
@@ -119,10 +129,79 @@ function handleSearch(query) {
     if (query) {
         setIsSearching(true);
         setSearchQuery(query);
+        addSearchHistory(query); // Save to history
         performClientSideSearch(query);
     } else {
         clearSearchAndReload();
     }
+}
+
+// Show search history dropdown
+function showSearchHistory() {
+    const history = getSearchHistory();
+    const historyEl = document.getElementById('searchHistory');
+    if (!historyEl || history.length === 0) return;
+    
+    historyEl.innerHTML = history.map(q => `
+        <div class="search-history-item" tabindex="0" data-query="${q}">
+            <span>${q}</span>
+            <span>↵</span>
+        </div>
+    `).join('') + `
+        <div class="search-history-item" tabindex="0" data-clear="true">
+            <span style="color: #888;">🗑 Xóa lịch sử</span>
+        </div>
+    `;
+    historyEl.style.display = 'block';
+    
+    // Add click handlers
+    historyEl.querySelectorAll('.search-history-item').forEach(item => {
+        item.addEventListener('click', () => {
+            if (item.dataset.clear) {
+                clearSearchHistory();
+                historyEl.style.display = 'none';
+            } else {
+                document.getElementById('searchInput').value = item.dataset.query;
+                handleSearch(item.dataset.query);
+                historyEl.style.display = 'none';
+            }
+        });
+    });
+}
+
+// Hide search history
+function hideSearchHistory() {
+    const historyEl = document.getElementById('searchHistory');
+    if (historyEl) historyEl.style.display = 'none';
+}
+
+// Setup filter chips
+function setupFilterChips() {
+    const chips = document.querySelectorAll('.chip');
+    chips.forEach(chip => {
+        chip.addEventListener('click', () => {
+            const filter = chip.dataset.filter;
+            const [type, value] = filter.split(':');
+            
+            chip.classList.toggle('active');
+            const isActive = chip.classList.contains('active');
+            
+            if (isActive) {
+                // Filter movies
+                const filtered = allMovies.filter(m => {
+                    if (type === 'year') return m.year === value;
+                    if (type === 'quality') return m.quality === value;
+                    return false;
+                });
+                if (filtered.length > 0) {
+                    const pathImage = 'https://img.ophim.live/uploads/movies/';
+                    renderMoviesWithSections(filtered, pathImage, loadMoreMovies, playMovie, currentFilter);
+                }
+            } else {
+                loadMovies(1, false);
+            }
+        });
+    });
 }
 
 // Perform client-side search on loaded movies

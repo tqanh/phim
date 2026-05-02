@@ -20,7 +20,15 @@
             <div class="nav-item" tabindex="0" data-section="series">Phim Bộ</div>
         </nav>
         <div class="search-container">
-            <input type="text" class="search-input" id="searchInput" placeholder="Tìm phim... (S, Enter để tìm)" tabindex="0">
+            <input type="text" class="search-input" id="searchInput" placeholder="Tìm phim... (S, Enter để tìm)" tabindex="0" autocomplete="off">
+            <div class="search-history" id="searchHistory" style="display: none;"></div>
+        </div>
+        <!-- Filter Chips -->
+        <div class="filter-chips" id="filterChips">
+            <button class="chip" data-filter="year:2025">2025</button>
+            <button class="chip" data-filter="year:2024">2024</button>
+            <button class="chip" data-filter="quality:FHD">FHD</button>
+            <button class="chip" data-filter="quality:HD">HD</button>
         </div>
     </header>
 
@@ -91,6 +99,27 @@
 
     <!-- Toast Notification -->
     <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Movie Details Modal -->
+    <div class="details-modal" id="detailsModal" style="display: none;">
+        <div class="details-content">
+            <button class="details-close" id="detailsClose">✕</button>
+            <div class="details-poster" id="detailsPoster"></div>
+            <div class="details-info">
+                <h2 id="detailsTitle"></h2>
+                <div class="details-meta" id="detailsMeta"></div>
+                <p class="details-desc" id="detailsDesc"></p>
+                <div class="details-actions">
+                    <button class="btn-primary" id="detailsPlayBtn">▶ Xem Phim</button>
+                    <button class="btn-secondary" id="detailsFavBtn">🤍 Yêu Thích</button>
+                </div>
+                <div class="related-section" id="relatedSection">
+                    <h3>Phim Tương Tự</h3>
+                    <div class="related-movies" id="relatedMovies"></div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- TV Box Help Overlay -->
     <div class="tv-help-overlay" id="tvHelpOverlay">
