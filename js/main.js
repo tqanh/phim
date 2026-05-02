@@ -111,14 +111,40 @@ function switchTab(tab) {
     loadMovies(1, false);
 }
 
-// Handle search
+// Handle search - client-side since API endpoint removed
 function handleSearch(query) {
     if (query) {
         setIsSearching(true);
         setSearchQuery(query);
-        loadMovies(1, false);
+        performClientSideSearch(query);
     } else {
         clearSearchAndReload();
+    }
+}
+
+// Perform client-side search on loaded movies
+function performClientSideSearch(query) {
+    // Check if we have any movies loaded
+    if (allMovies.length === 0) {
+        showError('Đang tải dữ liệu phim, vui lòng thử lại sau vài giây...', clearSearchAndReload);
+        return;
+    }
+    
+    const normalizedQuery = query.toLowerCase().trim();
+    
+    // Search in all loaded movies
+    const filteredMovies = allMovies.filter(movie => {
+        const name = (movie.name || '').toLowerCase();
+        const originName = (movie.origin_name || '').toLowerCase();
+        return name.includes(normalizedQuery) || originName.includes(normalizedQuery);
+    });
+    
+    if (filteredMovies.length > 0) {
+        const pathImage = 'https://img.ophim.live/uploads/movies/';
+        renderMoviesWithSections(filteredMovies, pathImage, loadMoreMovies, playMovie, currentFilter);
+    } else {
+        // Show message indicating search only covers loaded movies
+        showError(`Không tìm thấy "${query}" trong ${allMovies.length} phim đã tải. Vui lòng tải thêm phim hoặc thử từ khóa khác.`, clearSearchAndReload);
     }
 }
 
