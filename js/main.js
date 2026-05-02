@@ -275,12 +275,22 @@ function handleKeyNavigation(e) {
                     return;
                 case 'ArrowRight':
                     e.preventDefault();
-                    // Find next enabled control button (cycle to beginning if at end)
-                    for (let i = 1; i < videoControls.length; i++) {
-                        const nextIndex = (controlIndex + i) % videoControls.length;
-                        if (!videoControls[nextIndex].disabled) {
-                            videoControls[nextIndex].focus();
-                            break;
+                    // Check if at last control button
+                    const isLastControl = controlIndex === videoControls.length - 1;
+                    if (isLastControl) {
+                        // Go to episode panel
+                        const epToFocus = document.querySelector('.episode-item.active') || episodeItems[0];
+                        if (epToFocus) {
+                            epToFocus.focus();
+                            epToFocus.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                    } else {
+                        // Find next enabled control button
+                        for (let i = controlIndex + 1; i < videoControls.length; i++) {
+                            if (!videoControls[i].disabled) {
+                                videoControls[i].focus();
+                                break;
+                            }
                         }
                     }
                     return;
