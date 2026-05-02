@@ -140,3 +140,93 @@ export function getFavorites() {
         return [];
     }
 }
+
+const RECENTLY_VIEWED_KEY = 'phimTV_recentlyViewed';
+const SEARCH_HISTORY_KEY = 'phimTV_searchHistory';
+
+// Add movie to recently viewed (max 20)
+export function addToRecentlyViewed(movie) {
+    try {
+        const viewed = JSON.parse(localStorage.getItem(RECENTLY_VIEWED_KEY) || '[]');
+        // Remove if already exists
+        const filtered = viewed.filter(m => m.slug !== movie.slug);
+        // Add to front
+        filtered.unshift({
+            slug: movie.slug,
+            name: movie.name,
+            poster_url: movie.poster_url || movie.thumb_url || '',
+            year: movie.year || '',
+            time: movie.time || '',
+            lang: movie.lang || '',
+            episode_current: movie.episode_current || '',
+            viewedAt: Date.now()
+        });
+        // Keep only 20
+        localStorage.setItem(RECENTLY_VIEWED_KEY, JSON.stringify(filtered.slice(0, 20)));
+    } catch (e) {
+        console.error('Failed to add recently viewed:', e);
+    }
+}
+
+// Get recently viewed movies
+export function getRecentlyViewed() {
+    try {
+        return JSON.parse(localStorage.getItem(RECENTLY_VIEWED_KEY) || '[]');
+    } catch (e) {
+        return [];
+    }
+}
+
+// Add search query to history (max 10)
+export function addSearchHistory(query) {
+    try {
+        if (!query || query.trim().length < 2) return;
+        const history = JSON.parse(localStorage.getItem(SEARCH_HISTORY_KEY) || '[]');
+        // Remove if already exists
+        const filtered = history.filter(q => q.toLowerCase() !== query.toLowerCase());
+        // Add to front
+        filtered.unshift(query.trim());
+        // Keep only 10
+        localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(filtered.slice(0, 10)));
+    } catch (e) {
+        console.error('Failed to add search history:', e);
+    }
+}
+
+// Get search history
+export function getSearchHistory() {
+    try {
+        return JSON.parse(localStorage.getItem(SEARCH_HISTORY_KEY) || '[]');
+    } catch (e) {
+        return [];
+    }
+}
+
+// Clear search history
+export function clearSearchHistory() {
+    try {
+        localStorage.removeItem(SEARCH_HISTORY_KEY);
+    } catch (e) {
+        console.error('Failed to clear search history:', e);
+    }
+}
+
+// Get overall watch progress % for a movie (for poster display)
+export function getMovieProgress(slug) {
+    try {
+        const progress = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+        let totalProgress = 0;
+        let count = 0;
+        
+        for (const [key, value] of Object.entries(progress)) {
+            if (key.startsWith(slug + '_') && value.duration > 0) {
+                totalProgress += (value.currentTime / value.duration) * 100;
+                count++;
+            }
+        }
+        
+        return count > 0 ? Math.round(totalProgress / count) : 0;
+    } catch (e) {
+        return 0;
+    }
+}

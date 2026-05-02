@@ -1,9 +1,14 @@
-import { getContinueWatching, isFavorite, addToFavorites, removeFromFavorites, getFavorites } from './storage.js';
+import { 
+    getContinueWatching, isFavorite, addToFavorites, removeFromFavorites, getFavorites,
+    getRecentlyViewed, addToRecentlyViewed, getMovieProgress 
+} from './storage.js';
 import { isSearching, searchQuery, setCurrentPage } from './config.js';
+import { showToast } from './video-player.js';
 
 // Render movie card HTML
 export function renderMovieCard(movie, index, pathImage, showFavoriteBtn = true) {
-    const progress = movie.progress || 0;
+    // Get progress from storage for all movies
+    const progress = movie.progress || getMovieProgress(movie.slug);
     const hasProgress = progress > 0 && progress < 95;
     const isFav = isFavorite(movie.slug);
     
@@ -37,11 +42,12 @@ export function renderMovieCard(movie, index, pathImage, showFavoriteBtn = true)
     `;
 }
 
-// Render movies with sections (Favorites + Continue Watching + New Movies)
+// Render movies with sections (Favorites + Recently Viewed + Continue Watching + New Movies)
 export function renderMoviesWithSections(moviesList, pathImage, onLoadMore, onMovieClick, currentFilter = 'movies') {
     const mainContent = document.getElementById('mainContent');
     const continueWatching = getContinueWatching();
     const favorites = getFavorites();
+    const recentlyViewed = getRecentlyViewed();
     
     let html = '';
     
@@ -49,9 +55,21 @@ export function renderMoviesWithSections(moviesList, pathImage, onLoadMore, onMo
     if (favorites.length > 0 && currentFilter === 'movies' && !isSearching) {
         html += `
             <section class="section favorites-section">
-                <h2 class="section-title">Phim Yêu Thích</h2>
+                <h2 class="section-title">❤️ Phim Yêu Thích</h2>
                 <div class="movie-row" id="favoritesRow">
                     ${favorites.map((movie, index) => renderMovieCard(movie, index, pathImage)).join('')}
+                </div>
+            </section>
+        `;
+    }
+    
+    // Recently Viewed Section (only show in 'movies' tab)
+    if (recentlyViewed.length > 0 && currentFilter === 'movies' && !isSearching) {
+        html += `
+            <section class="section">
+                <h2 class="section-title">👁️ Đã Xem Gần Đây</h2>
+                <div class="movie-row" id="recentlyRow">
+                    ${recentlyViewed.map((movie, index) => renderMovieCard(movie, index, pathImage)).join('')}
                 </div>
             </section>
         `;
@@ -61,7 +79,7 @@ export function renderMoviesWithSections(moviesList, pathImage, onLoadMore, onMo
     if (continueWatching.length > 0 && currentFilter === 'movies') {
         html += `
             <section class="section">
-                <h2 class="section-title">Tiếp Tục Xem</h2>
+                <h2 class="section-title">▶️ Tiếp Tục Xem</h2>
                 <div class="movie-row" id="continueRow">
                     ${continueWatching.map((movie, index) => renderMovieCard(movie, index, pathImage)).join('')}
                 </div>
@@ -144,15 +162,59 @@ export function appendMovies(newMovies, pathImage, onMovieClick) {
 export function addMovieEventHandlers(onMovieClick, moviesList = []) {
     // Movie item click handlers
     document.querySelectorAll('.movie-item').forEach(item => {
+        let longPressTimer;
+        let isLongPress = false;
+        
         item.addEventListener('click', (e) => {
             // Don't trigger if clicking favorite button
             if (e.target.closest('.favorite-btn')) return;
+            // Don't trigger if long press was detected
+            if (isLongPress) {
+                isLongPress = false;
+                return;
+            }
             onMovieClick(item.dataset.slug);
         });
+        
+        // Long press detection for TV Box (hold Enter for 1 second)
         item.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
-                onMovieClick(item.dataset.slug);
+                
+                // Start long press timer
+                longPressTimer = setTimeout(() => {
+                    isLongPress = true;
+                    const slug = item.dataset.slug;
+                    const movie = moviesList.find(m => m.slug === slug);
+                    
+                    if (movie) {
+                        if (isFavorite(slug)) {
+                            removeFromFavorites(slug);
+                            showToast('Đã xóa khỏi yêu thích', '💔');
+                        } else {
+                            addToFavorites(movie);
+                            showToast('Đã thêm vào yêu thích', '❤️');
+                        }
+                        
+                        // Update UI
+                        const favBtn = item.querySelector('.favorite-btn');
+                        if (favBtn) {
+                            const isFav = isFavorite(slug);
+                            favBtn.innerHTML = isFav ? '❤️' : '🤍';
+                            favBtn.classList.toggle('is-favorite', isFav);
+                        }
+                    }
+                }, 1000);
+            }
+        });
+        
+        item.addEventListener('keyup', (e) => {
+            if (e.key === 'Enter') {
+                clearTimeout(longPressTimer);
+                // If not long press, play the movie
+                if (!isLongPress) {
+                    onMovieClick(item.dataset.slug);
+                }
             }
         });
     });

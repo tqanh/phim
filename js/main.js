@@ -11,6 +11,7 @@ import { renderMoviesWithSections, appendMovies, showLoading, showError, clearSe
 import { openModal, closeModal } from './video-player.js';
 import { fetchMovieDetails } from './api.js';
 import { setupTVHelp, isHelpOverlayActive, closeHelpOverlay } from './tv-help.js';
+import { addToRecentlyViewed } from './storage.js';
 
 // Initialize app
 document.addEventListener('DOMContentLoaded', () => {
@@ -201,6 +202,8 @@ async function playMovie(slug) {
             
             if (videoUrl) {
                 setCurrentMovieInfo(data.movie);
+                // Add to recently viewed
+                addToRecentlyViewed(data.movie);
                 openModal(videoUrl, data.movie?.name || 'Phim', slug, episodeId, allEpisodes, 0);
             } else {
                 alert('Không tìm thấy link phim!');
@@ -371,6 +374,25 @@ function handleKeyNavigation(e) {
         case 'S':
             e.preventDefault();
             document.getElementById('searchInput').focus();
+            break;
+
+        case '1':
+        case '2':
+        case '3':
+        case '4':
+        case '5':
+        case '6':
+        case '7':
+        case '8':
+        case '9':
+            e.preventDefault();
+            // Navigate to movie by index (1-9)
+            const index = parseInt(e.key) - 1;
+            const allMovies = document.querySelectorAll('.movie-item');
+            if (allMovies[index]) {
+                allMovies[index].focus();
+                allMovies[index].scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
             break;
 
         case 'ArrowRight':

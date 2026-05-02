@@ -2,12 +2,15 @@ import { loadWatchProgress, saveWatchProgress } from './storage.js';
 import { formatTime } from './api.js';
 import { 
     setHls, setCurrentVideoUrl, setCurrentMovieSlug, setCurrentEpisodeId, setCurrentMovieInfo,
-    setCurrentEpisodes, setCurrentEpisodeIndex, setHasMultipleEpisodes,
+    setCurrentEpisodes, setCurrentEpisodeIndex, setHasMultipleEpisodes, setLastFocusedElement,
     hls, currentMovieSlug, currentEpisodeId, currentMovieInfo,
-    currentEpisodes, currentEpisodeIndex, hasMultipleEpisodes
+    currentEpisodes, currentEpisodeIndex, hasMultipleEpisodes, lastFocusedElement
 } from './config.js';
 
 let volumeTimeout = null;
+let autoplayCountdown = null;
+let currentPlaybackSpeed = 1.0;
+const playbackSpeeds = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0];
 
 // Show volume indicator
 function showVolumeIndicator(volume) {
@@ -44,6 +47,9 @@ function showResumeNotification(currentTime) {
 
 // Open Modal with Video Player
 export function openModal(videoUrl, movieName, slug, episodeId, episodes = [], startIndex = 0) {
+    // Save current focused element before opening modal
+    setLastFocusedElement(document.activeElement);
+    
     const modal = document.getElementById('modalOverlay');
     const video = document.getElementById('videoPlayer');
     const closeBtn = document.getElementById('modalClose');
@@ -160,7 +166,7 @@ function setupEpisodeSearch(episodes, slug) {
 }
 
 // Show toast notification
-function showToast(message, icon = '▶') {
+export function showToast(message, icon = '▶') {
     const container = document.getElementById('toastContainer');
     if (!container) return;
     
@@ -216,11 +222,13 @@ export function closeModal() {
     
     modal.classList.remove('active');
     
-    // Return focus to last focused movie
-    const lastMovie = document.querySelector('.movie-item:focus') || 
-                     document.querySelector(`[data-slug]`);
-    if (lastMovie) {
-        lastMovie.focus();
+    // Return focus to last focused element before modal opened
+    if (lastFocusedElement && lastFocusedElement.isConnected) {
+        lastFocusedElement.focus();
+    } else {
+        // Fallback: focus first movie item
+        const firstMovie = document.querySelector('.movie-item');
+        if (firstMovie) firstMovie.focus();
     }
 }
 
@@ -366,6 +374,55 @@ export function nextEpisode() {
     if (currentEpisodeIndex < currentEpisodes.length - 1) {
         playEpisode(currentEpisodeIndex + 1);
     }
+}
+
+// Start autoplay countdown
+function startAutoplayCountdown() {
+    const countdownEl = document.getElementById('autoplayCountdown');
+    const countdownNum = document.getElementById('countdownNumber');
+    const cancelBtn = document.getElementById('cancelAutoplayBtn');
+    
+    if (!countdownEl || currentEpisodeIndex >= currentEpisodes.length - 1) return;
+    
+    let seconds = 5;
+    countdownEl.style.display = 'flex';
+    countdownNum.textContent = seconds;
+    
+    // Setup cancel button
+    cancelBtn.onclick = () => {
+        clearInterval(autoplayCountdown);
+        countdownEl.style.display = 'none';
+    };
+    
+    autoplayCountdown = setInterval(() => {
+        seconds--;
+        countdownNum.textContent = seconds;
+        
+        if (seconds <= 0) {
+            clearInterval(autoplayCountdown);
+            countdownEl.style.display = 'none';
+            nextEpisode();
+        }
+    }, 1000);
+}
+
+// Toggle playback speed
+function togglePlaybackSpeed() {
+    const video = document.getElementById('videoPlayer');
+    const speedBtn = document.getElementById('speedBtn');
+    
+    const currentIndex = playbackSpeeds.indexOf(currentPlaybackSpeed);
+    const nextIndex = (currentIndex + 1) % playbackSpeeds.length;
+    currentPlaybackSpeed = playbackSpeeds[nextIndex];
+    
+    video.playbackRate = currentPlaybackSpeed;
+    speedBtn.textContent = currentPlaybackSpeed.toFixed(1) + 'x';
+}
+
+// Skip forward/backward by seconds
+function skipSeconds(seconds) {
+    const video = document.getElementById('videoPlayer');
+    video.currentTime = Math.max(0, Math.min(video.currentTime + seconds, video.duration || 0));
 }
 
 // Navigate to previous episode
@@ -537,6 +594,13 @@ function setupVideoPlayer(videoUrl, movieName, slug, episodeId) {
     video.addEventListener('play', updatePlayPauseButton);
     video.addEventListener('pause', updatePlayPauseButton);
     
+    // Autoplay next episode when video ends
+    video.addEventListener('ended', () => {
+        if (hasMultipleEpisodes && currentEpisodeIndex < currentEpisodes.length - 1) {
+            startAutoplayCountdown();
+        }
+    });
+    
     // Save progress every 10 seconds
     saveInterval = setInterval(() => {
         if (!video.paused && video.currentTime > 0 && slug && episodeId) {
@@ -598,6 +662,26 @@ function setupVideoPlayer(videoUrl, movieName, slug, episodeId) {
             toggleFullscreen();
         }
     };
+    
+    // Speed button
+    const speedBtn = document.getElementById('speedBtn');
+    if (speedBtn) {
+        speedBtn.onclick = togglePlaybackSpeed;
+        speedBtn.onkeydown = (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                togglePlaybackSpeed();
+            }
+        };
+    }
+    
+    // Skip buttons
+    document.getElementById('skipBack10Btn')?.addEventListener('click', () => skipSeconds(-10));
+    document.getElementById('skipBack30Btn')?.addEventListener('click', () => skipSeconds(-30));
+    document.getElementById('skipBack60Btn')?.addEventListener('click', () => skipSeconds(-60));
+    document.getElementById('skipForward10Btn')?.addEventListener('click', () => skipSeconds(10));
+    document.getElementById('skipForward30Btn')?.addEventListener('click', () => skipSeconds(30));
+    document.getElementById('skipForward60Btn')?.addEventListener('click', () => skipSeconds(60));
     
     function toggleFullscreen() {
         try {
@@ -686,6 +770,11 @@ function setupVideoPlayer(videoUrl, movieName, slug, episodeId) {
             case 'F':
                 e.preventDefault();
                 toggleFullscreen();
+                break;
+            case 's':
+            case 'S':
+                e.preventDefault();
+                togglePlaybackSpeed();
                 break;
             case 'n':
             case 'N':

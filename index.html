@@ -46,10 +46,19 @@
                         <button class="error-retry-btn" id="errorRetryBtn">Thử lại</button>
                     </div>
                     <div class="video-controls" id="videoControls">
-                        <div class="control-bar">
+                        <div class="control-bar control-bar-top">
+                            <button class="control-btn skip-btn" id="skipBack10Btn" tabindex="0">-10s</button>
+                            <button class="control-btn skip-btn" id="skipBack30Btn" tabindex="0">-30s</button>
+                            <button class="control-btn skip-btn" id="skipBack60Btn" tabindex="0">-60s</button>
+                            <div class="time-display" id="timeDisplay">00:00 / 00:00</div>
+                            <button class="control-btn skip-btn" id="skipForward10Btn" tabindex="0">+10s</button>
+                            <button class="control-btn skip-btn" id="skipForward30Btn" tabindex="0">+30s</button>
+                            <button class="control-btn skip-btn" id="skipForward60Btn" tabindex="0">+60s</button>
+                        </div>
+                        <div class="control-bar control-bar-main">
                             <button class="control-btn" id="playPauseBtn" tabindex="0">⏵ Play</button>
                             <button class="control-btn" id="prevEpisodeBtn" tabindex="0">⏮ Tập Trước</button>
-                            <div class="time-display" id="timeDisplay">00:00 / 00:00</div>
+                            <button class="control-btn speed-btn" id="speedBtn" tabindex="0">1.0x</button>
                             <button class="control-btn" id="nextEpisodeBtn" tabindex="0">Tập Tiếp ⏭</button>
                             <button class="control-btn" id="seekBackBtn" tabindex="0">⏪ -10s</button>
                             <button class="control-btn" id="seekForwardBtn" tabindex="0">⏩ +10s</button>
@@ -59,8 +68,12 @@
                             <div class="progress-bar" id="progressBar"></div>
                         </div>
                         <div class="volume-indicator" id="volumeIndicator">Âm lượng: 100%</div>
+                        <div class="autoplay-countdown" id="autoplayCountdown" style="display: none;">
+                            <span>Tập tiếp theo sau <span id="countdownNumber">5</span>s</span>
+                            <button class="control-btn" id="cancelAutoplayBtn">Hủy</button>
+                        </div>
                         <div class="control-hint">
-                            OK: Play/Pause | ⬇: Chọn Tập | ← →: Tua 10s | ⬆: Điều Khiển | Back: Thoát
+                            OK: Play/Pause | ⬇: Chọn Tập | ← →: Tua 10s | ⬆: Điều Khiển | Back: Thoát | S: Tốc độ
                         </div>
                     </div>
                 </div>

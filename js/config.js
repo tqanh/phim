@@ -24,6 +24,10 @@ export let allMovies = [];
 // Track last movie index before navigating to loadMoreBtn
 export let lastMovieIndexBeforeLoadMore = -1;
 
+// Track last focused element before opening modal (for focus memory)
+export let lastFocusedElement = null;
+export function setLastFocusedElement(el) { lastFocusedElement = el; }
+
 // Video player variables
 export let hls = null;
 export let currentVideoUrl = null;

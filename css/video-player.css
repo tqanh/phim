@@ -467,3 +467,75 @@
     90% { opacity: 1; transform: translateX(-50%) translateY(0); }
     100% { opacity: 0; transform: translateX(-50%) translateY(-20px); }
 }
+
+/* Two-row control bar layout */
+.control-bar-top {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.control-bar-top .time-display {
+    font-size: 18px;
+    font-weight: bold;
+    padding: 8px 15px;
+    background: rgba(0,0,0,0.5);
+    border-radius: 6px;
+    min-width: 140px;
+    text-align: center;
+}
+
+/* Skip buttons */
+.skip-btn {
+    background: rgba(255,255,255,0.15) !important;
+    padding: 8px 12px !important;
+    font-size: 14px !important;
+}
+
+.skip-btn:hover {
+    background: rgba(255,255,255,0.3) !important;
+}
+
+/* Speed button */
+.speed-btn {
+    background: #e50914 !important;
+    font-weight: bold;
+    min-width: 60px;
+}
+
+.speed-btn:hover {
+    background: #ff1a25 !important;
+}
+
+/* Autoplay countdown */
+.autoplay-countdown {
+    position: absolute;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(229, 9, 20, 0.95);
+    color: #fff;
+    padding: 15px 30px;
+    border-radius: 8px;
+    font-size: 18px;
+    font-weight: bold;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: translateX(-50%) scale(1); }
+    50% { transform: translateX(-50%) scale(1.02); }
+}
+
+.autoplay-countdown button {
+    background: #fff !important;
+    color: #e50914 !important;
+    padding: 8px 16px;
+}
