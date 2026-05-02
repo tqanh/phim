@@ -484,12 +484,14 @@ function setupVideoPlayer(videoUrl, movieName, slug, episodeId) {
                 break;
             case 'ArrowUp':
                 e.preventDefault();
+                e.stopPropagation();
                 // Focus first control button
                 const firstControl = document.querySelector('.control-btn');
                 if (firstControl) firstControl.focus();
                 break;
             case 'ArrowDown':
                 e.preventDefault();
+                e.stopPropagation();
                 // Focus episode panel
                 const epPanel = document.getElementById('episodePanel');
                 const episodeToFocus = document.querySelector('.episode-item.active') || 
