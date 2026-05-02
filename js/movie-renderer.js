@@ -1,13 +1,19 @@
-import { getContinueWatching } from './storage.js';
+import { getContinueWatching, isFavorite, addToFavorites, removeFromFavorites, getFavorites } from './storage.js';
 import { isSearching, searchQuery, setCurrentPage } from './config.js';
 
 // Render movie card HTML
-export function renderMovieCard(movie, index, pathImage) {
+export function renderMovieCard(movie, index, pathImage, showFavoriteBtn = true) {
     const progress = movie.progress || 0;
     const hasProgress = progress > 0 && progress < 95;
+    const isFav = isFavorite(movie.slug);
     
     return `
         <div class="movie-item" tabindex="0" data-movie-index="${index}" data-slug="${movie.slug}">
+            ${showFavoriteBtn ? `
+                <button class="favorite-btn ${isFav ? 'is-favorite' : ''}" data-slug="${movie.slug}" tabindex="-1">
+                    ${isFav ? '❤️' : '🤍'}
+                </button>
+            ` : ''}
             <img class="movie-poster" 
                  src="${movie.poster_url ? pathImage + movie.poster_url : movie.thumb_url ? pathImage + movie.thumb_url : 'https://via.placeholder.com/280x420?text=No+Image'}" 
                  alt="${movie.name}" 
@@ -31,12 +37,25 @@ export function renderMovieCard(movie, index, pathImage) {
     `;
 }
 
-// Render movies with sections (Continue Watching + New Movies)
+// Render movies with sections (Favorites + Continue Watching + New Movies)
 export function renderMoviesWithSections(moviesList, pathImage, onLoadMore, onMovieClick, currentFilter = 'movies') {
     const mainContent = document.getElementById('mainContent');
     const continueWatching = getContinueWatching();
+    const favorites = getFavorites();
     
     let html = '';
+    
+    // Favorites Section (only show in 'movies' tab and if has favorites)
+    if (favorites.length > 0 && currentFilter === 'movies' && !isSearching) {
+        html += `
+            <section class="section favorites-section">
+                <h2 class="section-title">Phim Yêu Thích</h2>
+                <div class="movie-row" id="favoritesRow">
+                    ${favorites.map((movie, index) => renderMovieCard(movie, index, pathImage)).join('')}
+                </div>
+            </section>
+        `;
+    }
     
     // Continue Watching Section (only show in 'movies' tab)
     if (continueWatching.length > 0 && currentFilter === 'movies') {
@@ -81,7 +100,7 @@ export function renderMoviesWithSections(moviesList, pathImage, onLoadMore, onMo
     mainContent.innerHTML = html;
     
     // Add event handlers
-    addMovieEventHandlers(onMovieClick);
+    addMovieEventHandlers(onMovieClick, filteredMovies);
     
     // Load more button handler
     const loadMoreBtn = document.getElementById('loadMoreBtn');
@@ -116,17 +135,43 @@ export function appendMovies(newMovies, pathImage, onMovieClick) {
     movieRow.insertAdjacentHTML('beforeend', newHtml);
     
     // Add event handlers for new items
-    addMovieEventHandlers(onMovieClick);
+    addMovieEventHandlers(onMovieClick, filteredNewMovies);
 }
 
-// Add event handlers to movie items
-export function addMovieEventHandlers(onMovieClick) {
+// Add event handlers to movie items and favorite buttons
+export function addMovieEventHandlers(onMovieClick, moviesList = []) {
+    // Movie item click handlers
     document.querySelectorAll('.movie-item').forEach(item => {
-        item.addEventListener('click', () => onMovieClick(item.dataset.slug));
+        item.addEventListener('click', (e) => {
+            // Don't trigger if clicking favorite button
+            if (e.target.closest('.favorite-btn')) return;
+            onMovieClick(item.dataset.slug);
+        });
         item.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
                 onMovieClick(item.dataset.slug);
+            }
+        });
+    });
+    
+    // Favorite button handlers
+    document.querySelectorAll('.favorite-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const slug = btn.dataset.slug;
+            const movie = moviesList.find(m => m.slug === slug);
+            
+            if (isFavorite(slug)) {
+                removeFromFavorites(slug);
+                btn.innerHTML = '🤍';
+                btn.classList.remove('is-favorite');
+            } else {
+                if (movie) {
+                    addToFavorites(movie);
+                    btn.innerHTML = '❤️';
+                    btn.classList.add('is-favorite');
+                }
             }
         });
     });

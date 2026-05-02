@@ -37,7 +37,13 @@
             <button class="modal-close" tabindex="0" id="modalClose">Thoát (Back)</button>
             <div class="video-layout">
                 <div class="video-container">
+                    <div class="video-title-overlay" id="videoTitleOverlay"></div>
                     <video class="video-player" id="videoPlayer" tabindex="0" playsinline></video>
+                    <div class="video-error" id="videoError" style="display: none;">
+                        <div class="error-icon">⚠️</div>
+                        <div class="error-text">Không thể tải video</div>
+                        <button class="error-retry-btn" id="errorRetryBtn">Thử lại</button>
+                    </div>
                     <div class="video-controls" id="videoControls">
                         <div class="control-bar">
                             <button class="control-btn" id="playPauseBtn" tabindex="0">⏵ Play</button>
@@ -59,12 +65,18 @@
                 </div>
                 <!-- Episode List Panel -->
                 <div class="episode-panel" id="episodePanel">
-                    <h3 class="episode-panel-title">Danh Sách Tập</h3>
+                    <h3 class="episode-panel-title" id="episodePanelTitle">Danh Sách Tập</h3>
+                    <div class="episode-search">
+                        <input type="text" id="episodeSearchInput" placeholder="Tìm tập... (nhập số)" tabindex="0">
+                    </div>
                     <div class="episode-list" id="episodeList"></div>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Toast Notification -->
+    <div class="toast-container" id="toastContainer"></div>
 
     <!-- TV Box Help Overlay -->
     <div class="tv-help-overlay" id="tvHelpOverlay">
@@ -86,6 +98,10 @@
                 <div class="tv-help-item">
                     <span class="tv-key">S</span>
                     <span>Tìm kiếm</span>
+                </div>
+                <div class="tv-help-item">
+                    <span class="tv-key">F</span>
+                    <span>Thêm/Xóa Yêu thích</span>
                 </div>
                 <div class="tv-help-item">
                     <span class="tv-key">OK</span>

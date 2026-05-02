@@ -4,6 +4,7 @@ export const API_BASE = 'https://ophim1.com';
 // Storage keys
 export const STORAGE_KEY = 'phimTV_watchProgress';
 export const CONTINUE_WATCHING_KEY = 'phimTV_continueWatching';
+export const FAVORITES_KEY = 'phimTV_favorites';
 
 // Focusable selectors for navigation
 export const focusableSelectors = '.nav-item, .movie-item, .modal-close, .search-input, .load-more-btn, .episode-item';

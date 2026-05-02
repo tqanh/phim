@@ -48,6 +48,11 @@ export function openModal(videoUrl, movieName, slug, episodeId, episodes = [], s
     const video = document.getElementById('videoPlayer');
     const closeBtn = document.getElementById('modalClose');
     const episodePanel = document.getElementById('episodePanel');
+    const episodePanelTitle = document.getElementById('episodePanelTitle');
+    const videoError = document.getElementById('videoError');
+    
+    // Hide error display
+    if (videoError) videoError.style.display = 'none';
     
     setCurrentVideoUrl(videoUrl);
     setCurrentMovieSlug(slug);
@@ -63,8 +68,20 @@ export function openModal(videoUrl, movieName, slug, episodeId, episodes = [], s
         episodePanel.style.display = episodes.length > 1 ? 'flex' : 'none';
     }
     
+    // Update episode panel title with count
+    if (episodePanelTitle) {
+        episodePanelTitle.textContent = `Danh Sách Tập (${episodes.length} tập)`;
+    }
+    
+    // Update video title overlay
+    const currentMovieName = currentMovieInfo?.name || 'Phim';
+    setupVideoTitle(currentMovieName, currentEpisodes, startIndex);
+    
     // Render episode list
     renderEpisodeList(episodes, startIndex, slug);
+    
+    // Setup episode search
+    setupEpisodeSearch(episodes, slug);
     
     // Setup video player with resume support
     setupVideoPlayer(videoUrl, movieName, slug, episodeId);
@@ -72,8 +89,109 @@ export function openModal(videoUrl, movieName, slug, episodeId, episodes = [], s
     // Setup episode navigation buttons
     setupEpisodeNavigation();
     
+    // Setup error retry button
+    setupErrorRetry();
+    
     // Focus close button initially
     setTimeout(() => closeBtn.focus(), 100);
+}
+
+// Setup video title overlay
+function setupVideoTitle(movieName, episodes, currentIndex) {
+    const titleOverlay = document.getElementById('videoTitleOverlay');
+    if (!titleOverlay) return;
+    
+    if (episodes.length > 1) {
+        const episode = episodes[currentIndex];
+        const episodeName = episode.name ? ` - ${episode.name}` : '';
+        titleOverlay.textContent = `${movieName} - Tập ${currentIndex + 1}${episodeName}`;
+    } else {
+        titleOverlay.textContent = movieName;
+    }
+}
+
+// Setup episode search
+function setupEpisodeSearch(episodes, slug) {
+    const searchInput = document.getElementById('episodeSearchInput');
+    if (!searchInput) return;
+    
+    // Clear previous value
+    searchInput.value = '';
+    
+    searchInput.addEventListener('input', (e) => {
+        const query = e.target.value.trim();
+        const episodeItems = document.querySelectorAll('.episode-item');
+        
+        if (!query) {
+            // Show all episodes
+            episodeItems.forEach(item => item.style.display = 'flex');
+            return;
+        }
+        
+        // Search by episode number
+        const searchNum = parseInt(query);
+        if (!isNaN(searchNum)) {
+            episodeItems.forEach((item, index) => {
+                const episodeNum = index + 1;
+                const match = episodeNum === searchNum || String(episodeNum).includes(query);
+                item.style.display = match ? 'flex' : 'none';
+            });
+            
+            // Focus first match
+            const firstMatch = document.querySelector('.episode-item[style="display: flex;"]');
+            if (firstMatch) {
+                firstMatch.focus();
+                firstMatch.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+    });
+    
+    searchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            // Focus first visible episode
+            const firstVisible = document.querySelector('.episode-item:not([style*="none"])');
+            if (firstVisible) {
+                firstVisible.focus();
+                firstVisible.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+    });
+}
+
+// Show toast notification
+function showToast(message, icon = '▶') {
+    const container = document.getElementById('toastContainer');
+    if (!container) return;
+    
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.innerHTML = `<span class="toast-icon">${icon}</span><span>${message}</span>`;
+    
+    container.appendChild(toast);
+    
+    // Remove after animation
+    setTimeout(() => {
+        toast.remove();
+    }, 3000);
+}
+
+// Setup error retry button
+function setupErrorRetry() {
+    const retryBtn = document.getElementById('errorRetryBtn');
+    if (!retryBtn) return;
+    
+    retryBtn.onclick = () => {
+        const videoError = document.getElementById('videoError');
+        const video = document.getElementById('videoPlayer');
+        
+        if (videoError) videoError.style.display = 'none';
+        
+        // Retry current video
+        if (currentVideoUrl && video) {
+            setupVideoPlayer(currentVideoUrl, currentMovieInfo?.name || 'Phim', currentMovieSlug, currentEpisodeId);
+        }
+    };
 }
 
 // Close Modal
@@ -195,13 +313,17 @@ export function playEpisode(index) {
         return;
     }
 
-    // Show loading indicator
+    // Show loading indicator and toast when switching episodes
     const video = document.getElementById('videoPlayer');
     const loadingIndicator = document.createElement('div');
     loadingIndicator.className = 'video-loading';
     loadingIndicator.innerHTML = '<div class="loading-spinner"></div><p>Đang tải tập...</p>';
     loadingIndicator.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;z-index:50;';
     document.querySelector('.video-container')?.appendChild(loadingIndicator);
+
+    // Show toast notification
+    const episodeName = episode.name ? ` - ${episode.name}` : '';
+    showToast(`Đang phát: Tập ${index + 1}${episodeName}`, '▶');
 
     // Update state
     setCurrentEpisodeIndex(index);
@@ -210,6 +332,9 @@ export function playEpisode(index) {
 
     // Re-render episode list to update active state
     renderEpisodeList(currentEpisodes, index, currentMovieSlug);
+    
+    // Re-setup episode search for new DOM
+    setupEpisodeSearch(currentEpisodes, currentMovieSlug);
 
     // Reload video player with new episode
     const movieName = currentMovieInfo?.name || 'Phim';
@@ -332,6 +457,28 @@ function setupVideoPlayer(videoUrl, movieName, slug, episodeId) {
         newHls.on(Hls.Events.ERROR, (event, data) => {
             if (data.fatal) {
                 console.error('HLS Error:', data);
+                // Show error display to user
+                const videoError = document.getElementById('videoError');
+                const errorText = videoError?.querySelector('.error-text');
+                if (videoError && errorText) {
+                    errorText.textContent = 'Không thể tải video. Có thể do lỗi mạng hoặc server.';
+                    videoError.style.display = 'block';
+                }
+                // Show toast notification
+                showToast('Lỗi tải video! Nhấn Thử lại', '⚠️');
+            }
+        });
+        
+        // Handle network errors
+        newHls.on(Hls.Events.ERROR, (event, data) => {
+            if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+                const videoError = document.getElementById('videoError');
+                const errorText = videoError?.querySelector('.error-text');
+                if (videoError && errorText) {
+                    errorText.textContent = 'Lỗi kết nối mạng. Vui lòng kiểm tra kết nối.';
+                    videoError.style.display = 'block';
+                }
+                showToast('Lỗi mạng! Kiểm tra kết nối', '⚠️');
             }
         });
     } else {
@@ -345,6 +492,25 @@ function setupVideoPlayer(videoUrl, movieName, slug, episodeId) {
         }
         video.play().catch(() => {
             // Auto-play blocked
+        });
+        
+        // Handle native video errors
+        video.addEventListener('error', () => {
+            const videoError = document.getElementById('videoError');
+            const errorText = videoError?.querySelector('.error-text');
+            if (videoError && errorText) {
+                const errorCode = video.error?.code;
+                let errorMsg = 'Không thể tải video';
+                switch(errorCode) {
+                    case 1: errorMsg = 'Lỗi tải video bị gián đoạn'; break;
+                    case 2: errorMsg = 'Lỗi mạng khi tải video'; break;
+                    case 3: errorMsg = 'Lỗi giải mã video'; break;
+                    case 4: errorMsg = 'Định dạng video không được hỗ trợ'; break;
+                }
+                errorText.textContent = errorMsg + '. Nhấn Thử lại.';
+                videoError.style.display = 'block';
+            }
+            showToast('Lỗi phát video! Nhấn Thử lại', '⚠️');
         });
     }
     

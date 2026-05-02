@@ -1,4 +1,4 @@
-import { STORAGE_KEY } from './config.js';
+import { STORAGE_KEY, FAVORITES_KEY } from './config.js';
 
 // Save watch progress to localStorage with complete movie info
 export function saveWatchProgress(slug, episodeId, currentTime, duration, currentMovieInfo) {
@@ -80,6 +80,62 @@ export function getContinueWatching() {
         
         // Sort by most recently watched
         return watching.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0)).slice(0, 10);
+    } catch (e) {
+        return [];
+    }
+}
+
+// Add movie to favorites
+export function addToFavorites(movie) {
+    try {
+        const favorites = JSON.parse(localStorage.getItem(FAVORITES_KEY) || '[]');
+        // Check if already in favorites
+        if (!favorites.find(f => f.slug === movie.slug)) {
+            favorites.push({
+                slug: movie.slug,
+                name: movie.name,
+                poster_url: movie.poster_url || movie.thumb_url || '',
+                year: movie.year || '',
+                time: movie.time || '',
+                lang: movie.lang || '',
+                episode_current: movie.episode_current || '',
+                content: movie.content || '',
+                addedAt: Date.now()
+            });
+            localStorage.setItem(FAVORITES_KEY, JSON.stringify(favorites));
+        }
+    } catch (e) {
+        console.error('Failed to add favorite:', e);
+    }
+}
+
+// Remove movie from favorites
+export function removeFromFavorites(slug) {
+    try {
+        const favorites = JSON.parse(localStorage.getItem(FAVORITES_KEY) || '[]');
+        const filtered = favorites.filter(f => f.slug !== slug);
+        localStorage.setItem(FAVORITES_KEY, JSON.stringify(filtered));
+    } catch (e) {
+        console.error('Failed to remove favorite:', e);
+    }
+}
+
+// Check if movie is in favorites
+export function isFavorite(slug) {
+    try {
+        const favorites = JSON.parse(localStorage.getItem(FAVORITES_KEY) || '[]');
+        return favorites.some(f => f.slug === slug);
+    } catch (e) {
+        return false;
+    }
+}
+
+// Get all favorites
+export function getFavorites() {
+    try {
+        const favorites = JSON.parse(localStorage.getItem(FAVORITES_KEY) || '[]');
+        // Sort by most recently added
+        return favorites.sort((a, b) => (b.addedAt || 0) - (a.addedAt || 0));
     } catch (e) {
         return [];
     }

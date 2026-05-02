@@ -168,6 +168,58 @@
     transition: all 0.2s;
 }
 
+/* Favorite Button on Movie Card */
+.favorite-btn {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: rgba(0, 0, 0, 0.7);
+    border: 2px solid #fff;
+    color: #fff;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    font-size: 20px;
+    cursor: pointer;
+    outline: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    z-index: 10;
+}
+
+.favorite-btn:hover,
+.favorite-btn:focus {
+    background: #e50914;
+    border-color: #e50914;
+    transform: scale(1.1);
+}
+
+.favorite-btn.is-favorite {
+    background: #e50914;
+    border-color: #e50914;
+}
+
+/* Favorites Section */
+.favorites-section {
+    background: linear-gradient(to right, rgba(229, 9, 20, 0.1), transparent);
+    border-left: 4px solid #e50914;
+    padding-left: 20px;
+    margin-bottom: 30px;
+}
+
+.favorites-section .section-title {
+    color: #e50914;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.favorites-section .section-title::before {
+    content: '❤️';
+}
+
 /* Loading Spinner */
 .loading-spinner {
     display: inline-block;

@@ -391,6 +391,37 @@ function handleKeyNavigation(e) {
             navigateVertical('up');
             break;
 
+        case 'f':
+        case 'F':
+            e.preventDefault();
+            if (activeElement.classList.contains('movie-item')) {
+                const slug = activeElement.dataset.slug;
+                const movie = allMovies.find(m => m.slug === slug);
+                if (movie) {
+                    import('./storage.js').then(({ isFavorite, addToFavorites, removeFromFavorites }) => {
+                        const btn = activeElement.querySelector('.favorite-btn');
+                        if (isFavorite(slug)) {
+                            removeFromFavorites(slug);
+                            if (btn) {
+                                btn.innerHTML = '🤍';
+                                btn.classList.remove('is-favorite');
+                            }
+                            // Refresh to remove from favorites section
+                            loadMovies(1, false);
+                        } else {
+                            addToFavorites(movie);
+                            if (btn) {
+                                btn.innerHTML = '❤️';
+                                btn.classList.add('is-favorite');
+                            }
+                            // Refresh to show in favorites section
+                            loadMovies(1, false);
+                        }
+                    });
+                }
+            }
+            break;
+
         case 'Enter':
             if (activeElement.classList.contains('movie-item')) {
                 e.preventDefault();
