@@ -264,24 +264,36 @@ function handleKeyNavigation(e) {
                     return;
                 case 'Tab':
                     e.preventDefault();
-                    // Cycle through controls
-                    const nextIndex = (controlIndex + 1) % videoControls.length;
-                    videoControls[nextIndex].focus();
+                    // Find next enabled control button (cycle)
+                    for (let i = 1; i < videoControls.length; i++) {
+                        const nextIndex = (controlIndex + i) % videoControls.length;
+                        if (!videoControls[nextIndex].disabled) {
+                            videoControls[nextIndex].focus();
+                            break;
+                        }
+                    }
                     return;
                 case 'ArrowRight':
                     e.preventDefault();
-                    if (controlIndex < videoControls.length - 1) {
-                        videoControls[controlIndex + 1].focus();
+                    // Find next enabled control button
+                    for (let i = controlIndex + 1; i < videoControls.length; i++) {
+                        if (!videoControls[i].disabled) {
+                            videoControls[i].focus();
+                            break;
+                        }
                     }
                     return;
                 case 'ArrowLeft':
                     e.preventDefault();
-                    if (controlIndex > 0) {
-                        videoControls[controlIndex - 1].focus();
-                    } else {
-                        // At first control, go back to video
-                        video.focus();
+                    // Find previous enabled control button
+                    for (let i = controlIndex - 1; i >= 0; i--) {
+                        if (!videoControls[i].disabled) {
+                            videoControls[i].focus();
+                            return;
+                        }
                     }
+                    // No enabled button found, go back to video
+                    video.focus();
                     return;
                 case 'ArrowUp':
                     e.preventDefault();
