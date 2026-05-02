@@ -23,9 +23,7 @@ export function renderMovieCard(movie, index, pathImage) {
             <div class="movie-details" aria-hidden="true">
                 <div class="movie-details-title">${movie.name}</div>
                 <div class="movie-details-meta">
-                    ${movie.year || ''} ${movie.time ? '• ' + movie.time : ''} 
-                    ${movie.lang ? '• ' + movie.lang : ''}
-                    ${movie.episode_current ? '• ' + movie.episode_current : ''}
+                    ${[movie.year, movie.time, movie.lang, movie.episode_current].filter(Boolean).join(' • ')}
                 </div>
                 <div class="movie-details-desc">${movie.content || 'Không có mô tả'}</div>
             </div>

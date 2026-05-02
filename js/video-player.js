@@ -185,38 +185,50 @@ function renderEpisodeList(episodes, activeIndex, slug) {
 // Play specific episode
 export function playEpisode(index) {
     if (index < 0 || index >= currentEpisodes.length) return;
-    
+
     const episode = currentEpisodes[index];
     const videoUrl = episode.link_m3u8 || episode.link_embed;
     const episodeSlug = episode.slug || `ep${index + 1}`;
-    
+
     if (!videoUrl) {
         alert('Không tìm thấy link tập này!');
         return;
     }
-    
+
+    // Show loading indicator
+    const video = document.getElementById('videoPlayer');
+    const loadingIndicator = document.createElement('div');
+    loadingIndicator.className = 'video-loading';
+    loadingIndicator.innerHTML = '<div class="loading-spinner"></div><p>Đang tải tập...</p>';
+    loadingIndicator.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;z-index:50;';
+    document.querySelector('.video-container')?.appendChild(loadingIndicator);
+
     // Update state
     setCurrentEpisodeIndex(index);
     setCurrentEpisodeId(episodeSlug);
     setCurrentVideoUrl(videoUrl);
-    
+
     // Re-render episode list to update active state
     renderEpisodeList(currentEpisodes, index, currentMovieSlug);
-    
+
     // Reload video player with new episode
-    const video = document.getElementById('videoPlayer');
     const movieName = currentMovieInfo?.name || 'Phim';
-    
+
     // Stop current playback
     video.pause();
     if (hls) {
         hls.destroy();
         setHls(null);
     }
-    
+
     // Setup new video
     setupVideoPlayer(videoUrl, movieName, currentMovieSlug, episodeSlug);
-    
+
+    // Remove loading indicator when video starts playing
+    video.addEventListener('loadeddata', () => {
+        loadingIndicator.remove();
+    }, { once: true });
+
     // Focus video player
     setTimeout(() => video.focus(), 100);
 }
