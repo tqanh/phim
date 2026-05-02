@@ -241,20 +241,6 @@ function handleKeyNavigation(e) {
                     e.preventDefault();
                     closeModal();
                     return;
-                case 'ArrowUp':
-                    e.preventDefault();
-                    if (episodeIndex > 0) {
-                        episodeItems[episodeIndex - 1].focus();
-                        episodeItems[episodeIndex - 1].scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    }
-                    return;
-                case 'ArrowDown':
-                    e.preventDefault();
-                    if (episodeIndex < episodeItems.length - 1) {
-                        episodeItems[episodeIndex + 1].focus();
-                        episodeItems[episodeIndex + 1].scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    }
-                    return;
                 case 'ArrowLeft':
                     e.preventDefault();
                     // Go back to first control button (Play/Pause)

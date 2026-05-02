@@ -142,6 +142,7 @@ function renderEpisodeList(episodes, activeIndex, slug) {
                     break;
                 case 'ArrowUp':
                     e.preventDefault();
+                    e.stopPropagation();
                     // Focus previous episode
                     if (currentIndex > 0) {
                         items[currentIndex - 1].focus();
@@ -150,6 +151,7 @@ function renderEpisodeList(episodes, activeIndex, slug) {
                     break;
                 case 'ArrowDown':
                     e.preventDefault();
+                    e.stopPropagation();
                     // Focus next episode
                     if (currentIndex < items.length - 1) {
                         items[currentIndex + 1].focus();
@@ -159,16 +161,9 @@ function renderEpisodeList(episodes, activeIndex, slug) {
                 case 'ArrowLeft':
                     e.preventDefault();
                     e.stopPropagation();
-                    // Go back to control buttons
+                    // Always go back to control buttons
                     const firstControlBtn = document.querySelector('.control-btn');
                     if (firstControlBtn) firstControlBtn.focus();
-                    break;
-                case 'ArrowUp':
-                    e.preventDefault();
-                    e.stopPropagation();
-                    // Go back to control buttons
-                    const controlBtn = document.querySelector('.control-btn');
-                    if (controlBtn) controlBtn.focus();
                     break;
                 case 'Backspace':
                 case 'Escape':
