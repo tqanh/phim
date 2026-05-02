@@ -675,13 +675,67 @@ function setupVideoPlayer(videoUrl, movieName, slug, episodeId) {
         };
     }
     
-    // Skip buttons
-    document.getElementById('skipBack10Btn')?.addEventListener('click', () => skipSeconds(-10));
-    document.getElementById('skipBack30Btn')?.addEventListener('click', () => skipSeconds(-30));
-    document.getElementById('skipBack60Btn')?.addEventListener('click', () => skipSeconds(-60));
-    document.getElementById('skipForward10Btn')?.addEventListener('click', () => skipSeconds(10));
-    document.getElementById('skipForward30Btn')?.addEventListener('click', () => skipSeconds(30));
-    document.getElementById('skipForward60Btn')?.addEventListener('click', () => skipSeconds(60));
+    // Skip buttons - with keyboard navigation
+    const skipButtons = [
+        'skipBack10Btn', 'skipBack30Btn', 'skipBack60Btn',
+        'skipForward10Btn', 'skipForward30Btn', 'skipForward60Btn'
+    ];
+    const mainButtons = [
+        'playPauseBtn', 'prevEpisodeBtn', 'seekBackBtn', 'speedBtn',
+        'seekForwardBtn', 'nextEpisodeBtn', 'fullscreenBtn'
+    ];
+    
+    // Setup keyboard navigation for skip buttons (top row)
+    skipButtons.forEach((id, index) => {
+        const btn = document.getElementById(id);
+        if (btn) {
+            btn.addEventListener('click', () => {
+                const seconds = id.includes('Back') ? 
+                    -parseInt(id.match(/\d+/)[0]) : 
+                    parseInt(id.match(/\d+/)[0]);
+                skipSeconds(seconds);
+            });
+            btn.onkeydown = (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const seconds = id.includes('Back') ? 
+                        -parseInt(id.match(/\d+/)[0]) : 
+                        parseInt(id.match(/\d+/)[0]);
+                    skipSeconds(seconds);
+                } else if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    // Move to corresponding main button
+                    const mainIndex = index < 3 ? index : index - 3 + 4;
+                    const targetBtn = document.getElementById(mainButtons[Math.min(mainIndex, mainButtons.length - 1)]);
+                    if (targetBtn) targetBtn.focus();
+                }
+            };
+        }
+    });
+    
+    // Setup keyboard navigation for main buttons (bottom row)
+    mainButtons.forEach((id, index) => {
+        const btn = document.getElementById(id);
+        if (btn) {
+            btn.onkeydown = (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    btn.click();
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    // Move to corresponding skip button
+                    let skipIndex;
+                    if (index < 3) skipIndex = index; // First 3 map to skipBack
+                    else if (index >= 4 && index < 7) skipIndex = index - 4 + 3; // seek/next/full map to skipForward
+                    else return; // Speed button doesn't map up
+                    const targetBtn = document.getElementById(skipButtons[Math.min(skipIndex, skipButtons.length - 1)]);
+                    if (targetBtn) targetBtn.focus();
+                }
+            };
+        }
+    });
     
     function toggleFullscreen() {
         try {
