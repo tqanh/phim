@@ -695,7 +695,7 @@ function setupVideoPlayer(videoUrl, movieName, slug, episodeId) {
                     parseInt(id.match(/\d+/)[0]);
                 skipSeconds(seconds);
             });
-            btn.onkeydown = (e) => {
+            btn.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter') {
                     e.preventDefault();
                     const seconds = id.includes('Back') ? 
@@ -705,12 +705,17 @@ function setupVideoPlayer(videoUrl, movieName, slug, episodeId) {
                 } else if (e.key === 'ArrowDown') {
                     e.preventDefault();
                     e.stopPropagation();
+                    console.log('ArrowDown from skip button', id, 'index:', index);
                     // Move to corresponding main button
                     const mainIndex = index < 3 ? index : index - 3 + 4;
                     const targetBtn = document.getElementById(mainButtons[Math.min(mainIndex, mainButtons.length - 1)]);
-                    if (targetBtn) targetBtn.focus();
+                    console.log('Target main button:', mainButtons[Math.min(mainIndex, mainButtons.length - 1)], targetBtn);
+                    if (targetBtn) {
+                        targetBtn.focus();
+                        console.log('Focused on:', targetBtn.id);
+                    }
                 }
-            };
+            });
         }
     });
     
@@ -718,22 +723,30 @@ function setupVideoPlayer(videoUrl, movieName, slug, episodeId) {
     mainButtons.forEach((id, index) => {
         const btn = document.getElementById(id);
         if (btn) {
-            btn.onkeydown = (e) => {
+            btn.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter') {
                     e.preventDefault();
                     btn.click();
                 } else if (e.key === 'ArrowUp') {
                     e.preventDefault();
                     e.stopPropagation();
+                    console.log('ArrowUp from main button', id, 'index:', index);
                     // Move to corresponding skip button
                     let skipIndex;
                     if (index < 3) skipIndex = index; // First 3 map to skipBack
                     else if (index >= 4 && index < 7) skipIndex = index - 4 + 3; // seek/next/full map to skipForward
-                    else return; // Speed button doesn't map up
+                    else {
+                        console.log('Speed button - no mapping up');
+                        return; // Speed button doesn't map up
+                    }
                     const targetBtn = document.getElementById(skipButtons[Math.min(skipIndex, skipButtons.length - 1)]);
-                    if (targetBtn) targetBtn.focus();
+                    console.log('Target skip button:', skipButtons[Math.min(skipIndex, skipButtons.length - 1)], targetBtn);
+                    if (targetBtn) {
+                        targetBtn.focus();
+                        console.log('Focused on:', targetBtn.id);
+                    }
                 }
-            };
+            });
         }
     });
     
