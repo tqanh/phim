@@ -55,6 +55,8 @@ async function loadMovies(page = 1, append = false) {
             let filteredItems = data.items;
             if (currentFilter === 'series') {
                 filteredItems = data.items.filter(isSeries);
+            } else if (currentFilter === 'single') {
+                filteredItems = data.items.filter(movie => !isSeries(movie));
             }
             
             if (append) {
@@ -92,7 +94,7 @@ async function loadMovies(page = 1, append = false) {
     }
 }
 
-// Switch between Movies and Series tabs
+// Switch between Movies, Single (Phim Lẻ), and Series tabs
 function switchTab(tab) {
     if (tab === currentFilter) return;
     

@@ -79,6 +79,8 @@ export function renderMoviesWithSections(moviesList, pathImage, onLoadMore, onMo
         sectionTitle = `Kết quả tìm kiếm: "${searchQuery}"`;
     } else if (currentFilter === 'series') {
         sectionTitle = 'Phim Bộ Mới Cập Nhật';
+    } else if (currentFilter === 'single') {
+        sectionTitle = 'Phim Lẻ Mới Cập Nhật';
     } else {
         sectionTitle = 'Phim Mới Cập Nhật';
     }
