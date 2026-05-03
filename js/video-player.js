@@ -625,54 +625,54 @@ function setupVideoPlayer(videoUrl, movieName, slug, episodeId) {
         updatePlayPauseButton();
     }
     
-    playPauseBtn.onclick = togglePlayPause;
-    playPauseBtn.onkeydown = (e) => {
+    playPauseBtn.addEventListener('click', togglePlayPause);
+    playPauseBtn.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
             e.preventDefault();
             togglePlayPause();
         }
-    };
+    });
     
     // Seek buttons
     function seek(seconds) {
         video.currentTime = Math.max(0, Math.min(video.duration || 0, video.currentTime + seconds));
     }
     
-    seekBackBtn.onclick = () => seek(-10);
-    seekBackBtn.onkeydown = (e) => {
+    seekBackBtn.addEventListener('click', () => seek(-10));
+    seekBackBtn.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
             e.preventDefault();
             seek(-10);
         }
-    };
+    });
     
-    seekForwardBtn.onclick = () => seek(10);
-    seekForwardBtn.onkeydown = (e) => {
+    seekForwardBtn.addEventListener('click', () => seek(10));
+    seekForwardBtn.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
             e.preventDefault();
             seek(10);
         }
-    };
+    });
     
     // Fullscreen
-    fullscreenBtn.onclick = toggleFullscreen;
-    fullscreenBtn.onkeydown = (e) => {
+    fullscreenBtn.addEventListener('click', toggleFullscreen);
+    fullscreenBtn.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
             e.preventDefault();
             toggleFullscreen();
         }
-    };
+    });
     
     // Speed button
     const speedBtn = document.getElementById('speedBtn');
     if (speedBtn) {
-        speedBtn.onclick = togglePlaybackSpeed;
-        speedBtn.onkeydown = (e) => {
+        speedBtn.addEventListener('click', togglePlaybackSpeed);
+        speedBtn.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
                 togglePlaybackSpeed();
             }
-        };
+        });
     }
     
     // Skip buttons - with keyboard navigation
