@@ -4,12 +4,11 @@ import {
     setCurrentMovieInfo, setCurrentFilter, movies, allMovies, currentPage, 
     isSearching, searchQuery, currentFilter 
 } from './config.js';
-import { fetchMovies, isSeries } from './api.js';
+import { fetchMovies, isSeries, fetchMovieDetails } from './api.js';
 import { setupTVFocusIndicator, setupSearch } from './focus-manager.js';
 import { navigateHorizontal, navigateVertical, scrollIntoView } from './navigation.js';
 import { renderMoviesWithSections, appendMovies, showLoading, showError, clearSearchInput } from './movie-renderer.js';
 import { openModal, closeModal } from './video-player.js';
-import { fetchMovieDetails } from './api.js';
 import { setupTVHelp, isHelpOverlayActive, closeHelpOverlay } from './tv-help.js';
 import { addToRecentlyViewed, addSearchHistory, getSearchHistory, clearSearchHistory } from './storage.js';
 
